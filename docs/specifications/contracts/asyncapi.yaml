@@ -1,0 +1,1911 @@
+asyncapi: 2.6.0
+
+info:
+  title: Stardogwalker Event API
+  version: 1.0.0
+  description: |
+    Domain events published by the Stardogwalker platform — Cardiff, South Wales.
+
+    Events use **CloudEvents 1.0 structured content mode**. Every message body is a
+    complete CloudEvents JSON document; the domain payload is in the `data` field.
+    Consumers filter by the `type` field to handle events of interest.
+
+    **Message broker:** AMQP 0.9.1. All events are published to the
+    `stardogwalker.events` topic exchange with channel names as routing keys.
+
+    **Event catalogue:**
+
+    | Domain           | Events                                                  |
+    |------------------|---------------------------------------------------------|
+    | Interest Requests| submitted · accepted · declined                         |
+    | Walk Requests    | submitted · accepted · declined · cancelled             |
+    | Walks            | scheduled · started · update-posted · completed · cancelled |
+    | Invoices         | created · sent · paid · overdue                         |
+    | Recurring Walks  | created · paused · resumed · cancelled                  |
+
+    **Notification triggers:** The following events should trigger owner or walker
+    notifications — `walk-request/accepted`, `walk-request/declined`,
+    `walk/update-posted`, `walk/completed`, `invoice/sent`, `invoice/overdue`.
+
+    **Real-time walk updates:** The `walk/update-posted` event is published for
+    notification and integration purposes. WebSocket / SSE push to owners is
+    deferred to a future iteration; V1 owners poll `GET /walks/{walkId}/updates`
+    via the REST API.
+
+    **REST API:** The full resource API is defined in the companion
+    [OpenAPI 3.0.3 contract](openapi.yaml).
+  contact:
+    name: Stardogwalker API Support
+    email: support@dogwalking.example.com
+    url: https://github.com/dataGriff/dog-walking
+  license:
+    name: MIT
+
+servers:
+  production:
+    url: amqp://events.dogwalking.example.com:5672
+    protocol: amqp
+    description: Production AMQP 0.9.1 event broker
+    security:
+      - userPassword: []
+  staging:
+    url: amqp://staging-events.dogwalking.example.com:5672
+    protocol: amqp
+    description: Staging AMQP 0.9.1 event broker
+    security:
+      - userPassword: []
+
+defaultContentType: application/json
+
+tags:
+  - name: Interest Requests
+    description: Events related to prospective client interest requests.
+  - name: Walk Requests
+    description: Events related to walk requests submitted by owners.
+  - name: Walks
+    description: Events related to the lifecycle of a dog walk.
+  - name: Invoices
+    description: Events related to invoice creation and payment.
+  - name: Recurring Walks
+    description: Events related to recurring walk schedules.
+
+channels:
+
+  # ---------------------------------------------------------------------------
+  # Interest Requests
+  # ---------------------------------------------------------------------------
+
+  interest-request/submitted:
+    description: |
+      Published when a prospective client submits an interest request via the
+      public marketing site. No authentication is required to trigger this event.
+    bindings:
+      amqp:
+        is: routingKey
+        exchange:
+          name: stardogwalker.events
+          type: topic
+          durable: true
+          autoDelete: false
+          vhost: /
+    subscribe:
+      operationId: onInterestRequestSubmitted
+      summary: Interest request submitted
+      description: Consumers receive this event when a prospective client submits an interest request via the public marketing site.
+      tags:
+        - name: Interest Requests
+      message:
+        $ref: '#/components/messages/InterestRequestSubmitted'
+
+  interest-request/accepted:
+    description: |
+      Published when the walker accepts an interest request. An Owner account
+      and User record have already been created when this event fires.
+      **Triggers:** invitation email to the new owner.
+    bindings:
+      amqp:
+        is: routingKey
+        exchange:
+          name: stardogwalker.events
+          type: topic
+          durable: true
+          autoDelete: false
+          vhost: /
+    subscribe:
+      operationId: onInterestRequestAccepted
+      summary: Interest request accepted; owner account created
+      description: Consumers receive this event when the walker accepts an interest request. An owner account and user record have already been created when this event fires.
+      tags:
+        - name: Interest Requests
+      message:
+        $ref: '#/components/messages/InterestRequestAccepted'
+
+  interest-request/declined:
+    description: Published when the walker declines an interest request.
+    bindings:
+      amqp:
+        is: routingKey
+        exchange:
+          name: stardogwalker.events
+          type: topic
+          durable: true
+          autoDelete: false
+          vhost: /
+    subscribe:
+      operationId: onInterestRequestDeclined
+      summary: Interest request declined
+      description: Consumers receive this event when the walker declines an interest request.
+      tags:
+        - name: Interest Requests
+      message:
+        $ref: '#/components/messages/InterestRequestDeclined'
+
+  # ---------------------------------------------------------------------------
+  # Walk Requests
+  # ---------------------------------------------------------------------------
+
+  walk-request/submitted:
+    description: |
+      Published when a dog owner submits a walk request.
+      Walker-facing systems can use this to alert the walker to new pending requests.
+    bindings:
+      amqp:
+        is: routingKey
+        exchange:
+          name: stardogwalker.events
+          type: topic
+          durable: true
+          autoDelete: false
+          vhost: /
+    subscribe:
+      operationId: onWalkRequestSubmitted
+      summary: Walk request submitted by an owner
+      description: Consumers receive this event when a dog owner submits a walk request. Walker-facing systems can use this to alert the walker to new pending requests.
+      tags:
+        - name: Walk Requests
+      message:
+        $ref: '#/components/messages/WalkRequestSubmitted'
+
+  walk-request/accepted:
+    description: |
+      Published when the walker accepts a walk request. A Walk record has been
+      created with the agreed rate applied.
+      **Triggers:** booking confirmation notification to the owner.
+    bindings:
+      amqp:
+        is: routingKey
+        exchange:
+          name: stardogwalker.events
+          type: topic
+          durable: true
+          autoDelete: false
+          vhost: /
+    subscribe:
+      operationId: onWalkRequestAccepted
+      summary: Walk request accepted; walk scheduled
+      description: Consumers receive this event when the walker accepts a walk request. A walk record has been created with the agreed rate applied. Triggers a booking confirmation notification to the owner.
+      tags:
+        - name: Walk Requests
+      message:
+        $ref: '#/components/messages/WalkRequestAccepted'
+
+  walk-request/declined:
+    description: |
+      Published when the walker declines a walk request.
+      **Triggers:** notification to the owner including any decline reason.
+    bindings:
+      amqp:
+        is: routingKey
+        exchange:
+          name: stardogwalker.events
+          type: topic
+          durable: true
+          autoDelete: false
+          vhost: /
+    subscribe:
+      operationId: onWalkRequestDeclined
+      summary: Walk request declined by the walker
+      description: Consumers receive this event when the walker declines a walk request. Triggers a notification to the owner including any decline reason.
+      tags:
+        - name: Walk Requests
+      message:
+        $ref: '#/components/messages/WalkRequestDeclined'
+
+  walk-request/cancelled:
+    description: Published when the owner cancels a pending walk request.
+    bindings:
+      amqp:
+        is: routingKey
+        exchange:
+          name: stardogwalker.events
+          type: topic
+          durable: true
+          autoDelete: false
+          vhost: /
+    subscribe:
+      operationId: onWalkRequestCancelled
+      summary: Walk request cancelled by the owner
+      description: Consumers receive this event when the owner cancels a pending walk request.
+      tags:
+        - name: Walk Requests
+      message:
+        $ref: '#/components/messages/WalkRequestCancelled'
+
+  # ---------------------------------------------------------------------------
+  # Walks
+  # ---------------------------------------------------------------------------
+
+  walk/scheduled:
+    description: |
+      Published when a new Walk is created from an accepted walk request.
+    bindings:
+      amqp:
+        is: routingKey
+        exchange:
+          name: stardogwalker.events
+          type: topic
+          durable: true
+          autoDelete: false
+          vhost: /
+    subscribe:
+      operationId: onWalkScheduled
+      summary: Walk scheduled
+      description: Consumers receive this event when a new walk is created from an accepted walk request.
+      tags:
+        - name: Walks
+      message:
+        $ref: '#/components/messages/WalkScheduled'
+
+  walk/started:
+    description: |
+      Published when the walker marks a walk as started (`in_progress`).
+    bindings:
+      amqp:
+        is: routingKey
+        exchange:
+          name: stardogwalker.events
+          type: topic
+          durable: true
+          autoDelete: false
+          vhost: /
+    subscribe:
+      operationId: onWalkStarted
+      summary: Walk started
+      description: Consumers receive this event when the walker marks a walk as started and its status transitions to in_progress.
+      tags:
+        - name: Walks
+      message:
+        $ref: '#/components/messages/WalkStarted'
+
+  walk/update-posted:
+    description: |
+      Published each time the walker posts an update (note or image) during a walk.
+      **Triggers:** real-time notification to the owner.
+      Note: WebSocket / SSE push is deferred to a future iteration. V1 owners poll
+      `GET /walks/{walkId}/updates` on the REST API.
+    bindings:
+      amqp:
+        is: routingKey
+        exchange:
+          name: stardogwalker.events
+          type: topic
+          durable: true
+          autoDelete: false
+          vhost: /
+    subscribe:
+      operationId: onWalkUpdatePosted
+      summary: Walk update posted during an active walk
+      description: Consumers receive this event each time the walker posts an update during a walk. Triggers a real-time notification to the owner.
+      tags:
+        - name: Walks
+      message:
+        $ref: '#/components/messages/WalkUpdatePosted'
+
+  walk/completed:
+    description: |
+      Published when the walker marks a walk as completed.
+      **Triggers:** completion notification to the owner with walk summary.
+    bindings:
+      amqp:
+        is: routingKey
+        exchange:
+          name: stardogwalker.events
+          type: topic
+          durable: true
+          autoDelete: false
+          vhost: /
+    subscribe:
+      operationId: onWalkCompleted
+      summary: Walk completed
+      description: Consumers receive this event when the walker marks a walk as completed. Triggers a completion notification to the owner with the walk summary.
+      tags:
+        - name: Walks
+      message:
+        $ref: '#/components/messages/WalkCompleted'
+
+  walk/cancelled:
+    description: |
+      Published when a scheduled walk is cancelled by either the walker or the owner.
+    bindings:
+      amqp:
+        is: routingKey
+        exchange:
+          name: stardogwalker.events
+          type: topic
+          durable: true
+          autoDelete: false
+          vhost: /
+    subscribe:
+      operationId: onWalkCancelled
+      summary: Walk cancelled
+      description: Consumers receive this event when a scheduled walk is cancelled by either the walker or the owner.
+      tags:
+        - name: Walks
+      message:
+        $ref: '#/components/messages/WalkCancelled'
+
+  # ---------------------------------------------------------------------------
+  # Invoices
+  # ---------------------------------------------------------------------------
+
+  invoice/created:
+    description: Published when the walker creates a new invoice draft.
+    bindings:
+      amqp:
+        is: routingKey
+        exchange:
+          name: stardogwalker.events
+          type: topic
+          durable: true
+          autoDelete: false
+          vhost: /
+    subscribe:
+      operationId: onInvoiceCreated
+      summary: Invoice created as a draft
+      description: Consumers receive this event when the walker creates a new invoice draft.
+      tags:
+        - name: Invoices
+      message:
+        $ref: '#/components/messages/InvoiceCreated'
+
+  invoice/sent:
+    description: |
+      Published when the walker sends an invoice to the owner.
+      **Triggers:** notification to the owner with a link to view and pay the invoice.
+    bindings:
+      amqp:
+        is: routingKey
+        exchange:
+          name: stardogwalker.events
+          type: topic
+          durable: true
+          autoDelete: false
+          vhost: /
+    subscribe:
+      operationId: onInvoiceSent
+      summary: Invoice sent to owner
+      description: Consumers receive this event when the walker sends an invoice to the owner. Triggers a notification to the owner with a link to view and pay the invoice.
+      tags:
+        - name: Invoices
+      message:
+        $ref: '#/components/messages/InvoiceSent'
+
+  invoice/paid:
+    description: |
+      Published when the owner marks an invoice as paid.
+      **Triggers:** payment confirmation notification to the walker.
+    bindings:
+      amqp:
+        is: routingKey
+        exchange:
+          name: stardogwalker.events
+          type: topic
+          durable: true
+          autoDelete: false
+          vhost: /
+    subscribe:
+      operationId: onInvoicePaid
+      summary: Invoice marked as paid
+      description: Consumers receive this event when the owner marks an invoice as paid. Triggers a payment confirmation notification to the walker.
+      tags:
+        - name: Invoices
+      message:
+        $ref: '#/components/messages/InvoicePaid'
+
+  invoice/overdue:
+    description: |
+      Published when the system automatically transitions a sent invoice to
+      `overdue` after its due date has passed.
+      **Triggers:** overdue notification to both owner and walker.
+    bindings:
+      amqp:
+        is: routingKey
+        exchange:
+          name: stardogwalker.events
+          type: topic
+          durable: true
+          autoDelete: false
+          vhost: /
+    subscribe:
+      operationId: onInvoiceOverdue
+      summary: Invoice flagged as overdue
+      description: Consumers receive this event when the system automatically transitions a sent invoice to overdue after its due date has passed. Triggers an overdue notification to both owner and walker.
+      tags:
+        - name: Invoices
+      message:
+        $ref: '#/components/messages/InvoiceOverdue'
+
+  # ---------------------------------------------------------------------------
+  # Recurring Walks
+  # ---------------------------------------------------------------------------
+
+  recurring-walk/created:
+    description: Published when an owner creates a new recurring walk schedule.
+    bindings:
+      amqp:
+        is: routingKey
+        exchange:
+          name: stardogwalker.events
+          type: topic
+          durable: true
+          autoDelete: false
+          vhost: /
+    subscribe:
+      operationId: onRecurringWalkCreated
+      summary: Recurring walk schedule created
+      description: Consumers receive this event when an owner creates a new recurring walk schedule.
+      tags:
+        - name: Recurring Walks
+      message:
+        $ref: '#/components/messages/RecurringWalkCreated'
+
+  recurring-walk/paused:
+    description: |
+      Published when the owner pauses a recurring walk schedule.
+      No further WalkRequests will be generated until the schedule is resumed.
+    bindings:
+      amqp:
+        is: routingKey
+        exchange:
+          name: stardogwalker.events
+          type: topic
+          durable: true
+          autoDelete: false
+          vhost: /
+    subscribe:
+      operationId: onRecurringWalkPaused
+      summary: Recurring walk paused
+      description: Consumers receive this event when the owner pauses a recurring walk schedule. No further walk requests will be generated until the schedule is resumed.
+      tags:
+        - name: Recurring Walks
+      message:
+        $ref: '#/components/messages/RecurringWalkStatusChanged'
+
+  recurring-walk/resumed:
+    description: Published when the owner resumes a paused recurring walk schedule.
+    bindings:
+      amqp:
+        is: routingKey
+        exchange:
+          name: stardogwalker.events
+          type: topic
+          durable: true
+          autoDelete: false
+          vhost: /
+    subscribe:
+      operationId: onRecurringWalkResumed
+      summary: Recurring walk resumed
+      description: Consumers receive this event when the owner resumes a paused recurring walk schedule.
+      tags:
+        - name: Recurring Walks
+      message:
+        $ref: '#/components/messages/RecurringWalkStatusChanged'
+
+  recurring-walk/cancelled:
+    description: |
+      Published when the owner permanently cancels a recurring walk schedule.
+      All future pending WalkRequests linked to the schedule are cancelled.
+    bindings:
+      amqp:
+        is: routingKey
+        exchange:
+          name: stardogwalker.events
+          type: topic
+          durable: true
+          autoDelete: false
+          vhost: /
+    subscribe:
+      operationId: onRecurringWalkCancelled
+      summary: Recurring walk cancelled
+      description: Consumers receive this event when the owner permanently cancels a recurring walk schedule. All future pending walk requests linked to the schedule are cancelled.
+      tags:
+        - name: Recurring Walks
+      message:
+        $ref: '#/components/messages/RecurringWalkStatusChanged'
+
+# =============================================================================
+# Components
+# =============================================================================
+
+components:
+
+  securitySchemes:
+    userPassword:
+      type: userPassword
+      description: AMQP broker username and password credentials
+
+  # ---------------------------------------------------------------------------
+  # Messages
+  # ---------------------------------------------------------------------------
+
+  messages:
+
+    InterestRequestSubmitted:
+      name: InterestRequestSubmitted
+      title: Interest request submitted
+      summary: A prospective client has submitted an interest request.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/InterestRequestSubmittedEnvelope'
+
+    InterestRequestAccepted:
+      name: InterestRequestAccepted
+      title: Interest request accepted
+      summary: The walker has accepted an interest request and created an owner account.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/InterestRequestAcceptedEnvelope'
+
+    InterestRequestDeclined:
+      name: InterestRequestDeclined
+      title: Interest request declined
+      summary: The walker has declined an interest request.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/InterestRequestDeclinedEnvelope'
+
+    WalkRequestSubmitted:
+      name: WalkRequestSubmitted
+      title: Walk request submitted
+      summary: A dog owner has submitted a new walk request.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/WalkRequestSubmittedEnvelope'
+
+    WalkRequestAccepted:
+      name: WalkRequestAccepted
+      title: Walk request accepted
+      summary: The walker has accepted a walk request and scheduled a walk.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/WalkRequestAcceptedEnvelope'
+
+    WalkRequestDeclined:
+      name: WalkRequestDeclined
+      title: Walk request declined
+      summary: The walker has declined a walk request.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/WalkRequestDeclinedEnvelope'
+
+    WalkRequestCancelled:
+      name: WalkRequestCancelled
+      title: Walk request cancelled
+      summary: An owner has cancelled a pending walk request.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/WalkRequestCancelledEnvelope'
+
+    WalkScheduled:
+      name: WalkScheduled
+      title: Walk scheduled
+      summary: A walk has been scheduled from an accepted request.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/WalkScheduledEnvelope'
+
+    WalkStarted:
+      name: WalkStarted
+      title: Walk started
+      summary: The walker has started a walk.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/WalkStartedEnvelope'
+
+    WalkUpdatePosted:
+      name: WalkUpdatePosted
+      title: Walk update posted
+      summary: The walker has posted a note or image during an active walk.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/WalkUpdatePostedEnvelope'
+
+    WalkCompleted:
+      name: WalkCompleted
+      title: Walk completed
+      summary: The walker has marked a walk as completed.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/WalkCompletedEnvelope'
+
+    WalkCancelled:
+      name: WalkCancelled
+      title: Walk cancelled
+      summary: A scheduled walk has been cancelled by the walker or owner.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/WalkCancelledEnvelope'
+
+    InvoiceCreated:
+      name: InvoiceCreated
+      title: Invoice created
+      summary: The walker has created a new invoice draft.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/InvoiceCreatedEnvelope'
+
+    InvoiceSent:
+      name: InvoiceSent
+      title: Invoice sent
+      summary: The walker has sent an invoice to the owner.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/InvoiceSentEnvelope'
+
+    InvoicePaid:
+      name: InvoicePaid
+      title: Invoice paid
+      summary: The owner has marked an invoice as paid.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/InvoicePaidEnvelope'
+
+    InvoiceOverdue:
+      name: InvoiceOverdue
+      title: Invoice overdue
+      summary: An unpaid invoice has passed its due date and been automatically flagged as overdue.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/InvoiceOverdueEnvelope'
+
+    RecurringWalkCreated:
+      name: RecurringWalkCreated
+      title: Recurring walk created
+      summary: An owner has set up a new recurring walk schedule.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/RecurringWalkCreatedEnvelope'
+
+    RecurringWalkStatusChanged:
+      name: RecurringWalkStatusChanged
+      title: Recurring walk status changed
+      summary: A recurring walk has been paused, resumed, or cancelled. Use the `type` field to distinguish.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/RecurringWalkStatusChangedEnvelope'
+
+  # ---------------------------------------------------------------------------
+  # Schemas
+  # ---------------------------------------------------------------------------
+
+  schemas:
+
+    # --- CloudEvents 1.0 base envelope ----------------------------------------
+
+    CloudEventBase:
+      type: object
+      description: |
+        Common CloudEvents 1.0 envelope fields present on every event.
+        See https://cloudevents.io for the full specification.
+      required:
+        - specversion
+        - id
+        - type
+        - source
+        - time
+        - datacontenttype
+      properties:
+        specversion:
+          type: string
+          const: "1.0"
+          description: CloudEvents specification version (always "1.0")
+          example: "1.0"
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier for this event occurrence
+          example: 7b1e4d2a-1234-5678-abcd-ef0123456789
+        type:
+          type: string
+          description: |
+            Event type in reverse-domain notation (`com.stardogwalker.<aggregate>.<event>`).
+            Use this field to route and filter events in consumers.
+          example: com.stardogwalker.walk.completed
+        source:
+          type: string
+          format: uri
+          description: URI identifying the system that produced the event
+          example: https://api.dogwalking.example.com/v1
+        subject:
+          type: string
+          format: uuid
+          description: ID of the primary resource this event relates to
+          example: dd00ee11-ff22-aa33-bb44-cc5566778899
+        time:
+          type: string
+          format: date-time
+          description: Timestamp of when the event occurred (RFC 3339)
+          example: '2026-03-28T10:00:00Z'
+        datacontenttype:
+          type: string
+          const: application/json
+          description: MIME type of the data payload (always "application/json")
+          example: application/json
+
+    # --- Shared value types ---------------------------------------------------
+
+    WalkType:
+      type: string
+      enum:
+        - solo_walk
+        - group_walk
+        - adventure_walk
+        - puppy_walk
+      description: The format of the walk
+      example: solo_walk
+
+    # --- Interest Request data ------------------------------------------------
+
+    InterestRequestSubmittedData:
+      type: object
+      required:
+        - id
+        - firstName
+        - lastName
+        - email
+        - postcode
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: aabb1122-ccdd-3344-eeff-556677889900
+        firstName:
+          type: string
+          example: Sarah
+        lastName:
+          type: string
+          example: Davies
+        email:
+          type: string
+          format: email
+          example: sarah.davies@example.com
+        postcode:
+          type: string
+          example: CF10 1AB
+        createdAt:
+          type: string
+          format: date-time
+          example: '2026-03-28T10:00:00Z'
+
+    InterestRequestAcceptedData:
+      type: object
+      required:
+        - id
+        - ownerId
+        - firstName
+        - lastName
+        - email
+        - acceptedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Interest request ID
+          example: aabb1122-ccdd-3344-eeff-556677889900
+        ownerId:
+          type: string
+          format: uuid
+          description: Newly created owner account ID
+          example: 3fa85f64-5717-4562-b3fc-2c963f66afa6
+        firstName:
+          type: string
+          example: Sarah
+        lastName:
+          type: string
+          example: Davies
+        email:
+          type: string
+          format: email
+          example: sarah.davies@example.com
+        acceptedAt:
+          type: string
+          format: date-time
+          example: '2026-03-28T11:00:00Z'
+
+    InterestRequestDeclinedData:
+      type: object
+      required:
+        - id
+        - email
+        - declinedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: aabb1122-ccdd-3344-eeff-556677889900
+        email:
+          type: string
+          format: email
+          example: sarah.davies@example.com
+        declineReason:
+          type: string
+          nullable: true
+          example: We are not currently covering the CF5 area.
+        declinedAt:
+          type: string
+          format: date-time
+          example: '2026-03-28T11:00:00Z'
+
+    # --- Walk Request data ----------------------------------------------------
+
+    WalkRequestSubmittedData:
+      type: object
+      required:
+        - id
+        - ownerId
+        - dogIds
+        - requestedDate
+        - requestedStartTime
+        - durationMinutes
+        - walkType
+        - submittedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: aa11bb22-cc33-dd44-ee55-ff6677889900
+        ownerId:
+          type: string
+          format: uuid
+          example: 3fa85f64-5717-4562-b3fc-2c963f66afa6
+        dogIds:
+          type: array
+          minItems: 1
+          items:
+            type: string
+            format: uuid
+          example:
+            - c1a2b3d4-5678-90ab-cdef-1234567890ab
+        requestedDate:
+          type: string
+          format: date
+          example: '2026-04-10'
+        requestedStartTime:
+          type: string
+          example: '09:00:00Z'
+        durationMinutes:
+          type: integer
+          example: 60
+        walkType:
+          $ref: '#/components/schemas/WalkType'
+        preferredWalkerId:
+          type: string
+          format: uuid
+          nullable: true
+          example: null
+        submittedAt:
+          type: string
+          format: date-time
+          example: '2026-03-28T10:00:00Z'
+
+    WalkRequestAcceptedData:
+      type: object
+      required:
+        - id
+        - walkId
+        - ownerId
+        - walkerId
+        - scheduledDate
+        - scheduledStartTime
+        - durationMinutes
+        - walkType
+        - agreedRate
+        - acceptedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Walk request ID
+          example: aa11bb22-cc33-dd44-ee55-ff6677889900
+        walkId:
+          type: string
+          format: uuid
+          description: Newly created Walk ID
+          example: dd00ee11-ff22-aa33-bb44-cc5566778899
+        ownerId:
+          type: string
+          format: uuid
+          example: 3fa85f64-5717-4562-b3fc-2c963f66afa6
+        walkerId:
+          type: string
+          format: uuid
+          example: 7b1e4d2a-1234-5678-abcd-ef0123456789
+        scheduledDate:
+          type: string
+          format: date
+          example: '2026-04-10'
+        scheduledStartTime:
+          type: string
+          example: '09:00:00Z'
+        durationMinutes:
+          type: integer
+          example: 60
+        walkType:
+          $ref: '#/components/schemas/WalkType'
+        agreedRate:
+          type: number
+          format: float
+          description: Hourly rate in GBP locked in from the walker's rate card
+          example: 18.00
+        acceptedAt:
+          type: string
+          format: date-time
+          example: '2026-03-28T14:00:00Z'
+
+    WalkRequestDeclinedData:
+      type: object
+      required:
+        - id
+        - ownerId
+        - declinedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: aa11bb22-cc33-dd44-ee55-ff6677889900
+        ownerId:
+          type: string
+          format: uuid
+          example: 3fa85f64-5717-4562-b3fc-2c963f66afa6
+        declineReason:
+          type: string
+          nullable: true
+          example: I am fully booked on that date.
+        declinedAt:
+          type: string
+          format: date-time
+          example: '2026-03-28T14:30:00Z'
+
+    WalkRequestCancelledData:
+      type: object
+      required:
+        - id
+        - ownerId
+        - cancelledAt
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: aa11bb22-cc33-dd44-ee55-ff6677889900
+        ownerId:
+          type: string
+          format: uuid
+          example: 3fa85f64-5717-4562-b3fc-2c963f66afa6
+        cancelledAt:
+          type: string
+          format: date-time
+          example: '2026-03-29T09:00:00Z'
+
+    # --- Walk data ------------------------------------------------------------
+
+    WalkScheduledData:
+      type: object
+      required:
+        - id
+        - requestId
+        - ownerId
+        - walkerId
+        - dogIds
+        - scheduledDate
+        - scheduledStartTime
+        - durationMinutes
+        - walkType
+        - agreedRate
+        - scheduledAt
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: dd00ee11-ff22-aa33-bb44-cc5566778899
+        requestId:
+          type: string
+          format: uuid
+          example: aa11bb22-cc33-dd44-ee55-ff6677889900
+        ownerId:
+          type: string
+          format: uuid
+          example: 3fa85f64-5717-4562-b3fc-2c963f66afa6
+        walkerId:
+          type: string
+          format: uuid
+          example: 7b1e4d2a-1234-5678-abcd-ef0123456789
+        dogIds:
+          type: array
+          minItems: 1
+          items:
+            type: string
+            format: uuid
+          example:
+            - c1a2b3d4-5678-90ab-cdef-1234567890ab
+        scheduledDate:
+          type: string
+          format: date
+          example: '2026-04-10'
+        scheduledStartTime:
+          type: string
+          example: '09:00:00Z'
+        durationMinutes:
+          type: integer
+          example: 60
+        walkType:
+          $ref: '#/components/schemas/WalkType'
+        agreedRate:
+          type: number
+          format: float
+          example: 18.00
+        scheduledAt:
+          type: string
+          format: date-time
+          example: '2026-03-28T14:00:00Z'
+
+    WalkStartedData:
+      type: object
+      required:
+        - id
+        - ownerId
+        - walkerId
+        - actualStartTime
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: dd00ee11-ff22-aa33-bb44-cc5566778899
+        ownerId:
+          type: string
+          format: uuid
+          example: 3fa85f64-5717-4562-b3fc-2c963f66afa6
+        walkerId:
+          type: string
+          format: uuid
+          example: 7b1e4d2a-1234-5678-abcd-ef0123456789
+        actualStartTime:
+          type: string
+          format: date-time
+          example: '2026-04-10T09:01:00Z'
+
+    WalkUpdatePostedData:
+      type: object
+      required:
+        - updateId
+        - walkId
+        - ownerId
+        - type
+        - createdAt
+      properties:
+        updateId:
+          type: string
+          format: uuid
+          example: 11223344-5566-7788-99aa-bbccddeeff00
+        walkId:
+          type: string
+          format: uuid
+          example: dd00ee11-ff22-aa33-bb44-cc5566778899
+        ownerId:
+          type: string
+          format: uuid
+          description: Owner to notify
+          example: 3fa85f64-5717-4562-b3fc-2c963f66afa6
+        type:
+          type: string
+          enum:
+            - note
+            - image
+          example: image
+        note:
+          type: string
+          nullable: true
+          example: null
+        imageUrl:
+          type: string
+          format: uri
+          nullable: true
+          example: https://storage.dogwalking.example.com/walks/dd00ee11/max-river.jpg
+        imageCaption:
+          type: string
+          nullable: true
+          example: Max splashing in the river!
+        createdAt:
+          type: string
+          format: date-time
+          example: '2026-04-10T09:30:00Z'
+
+    WalkCompletedData:
+      type: object
+      required:
+        - id
+        - ownerId
+        - walkerId
+        - actualEndTime
+        - completedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: dd00ee11-ff22-aa33-bb44-cc5566778899
+        ownerId:
+          type: string
+          format: uuid
+          example: 3fa85f64-5717-4562-b3fc-2c963f66afa6
+        walkerId:
+          type: string
+          format: uuid
+          example: 7b1e4d2a-1234-5678-abcd-ef0123456789
+        actualEndTime:
+          type: string
+          format: date-time
+          example: '2026-04-10T10:05:00Z'
+        distanceKm:
+          type: number
+          format: float
+          nullable: true
+          example: 3.2
+        summaryNotes:
+          type: string
+          nullable: true
+          example: Max was very well behaved today!
+        completedAt:
+          type: string
+          format: date-time
+          example: '2026-04-10T10:05:00Z'
+
+    WalkCancelledData:
+      type: object
+      required:
+        - id
+        - ownerId
+        - walkerId
+        - cancelledAt
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: dd00ee11-ff22-aa33-bb44-cc5566778899
+        ownerId:
+          type: string
+          format: uuid
+          example: 3fa85f64-5717-4562-b3fc-2c963f66afa6
+        walkerId:
+          type: string
+          format: uuid
+          example: 7b1e4d2a-1234-5678-abcd-ef0123456789
+        cancelReason:
+          type: string
+          nullable: true
+          example: Walker is unwell today.
+        cancelledAt:
+          type: string
+          format: date-time
+          example: '2026-04-09T18:00:00Z'
+
+    # --- Invoice data ---------------------------------------------------------
+
+    InvoiceCreatedData:
+      type: object
+      required:
+        - id
+        - ownerId
+        - walkerId
+        - total
+        - dueDate
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: ffee1122-3344-5566-7788-99aabbccddee
+        invoiceNumber:
+          type: string
+          nullable: true
+          example: INV-2026-0042
+        ownerId:
+          type: string
+          format: uuid
+          example: 3fa85f64-5717-4562-b3fc-2c963f66afa6
+        walkerId:
+          type: string
+          format: uuid
+          example: 7b1e4d2a-1234-5678-abcd-ef0123456789
+        total:
+          type: number
+          format: float
+          example: 45.00
+        dueDate:
+          type: string
+          format: date
+          example: '2026-04-30'
+        createdAt:
+          type: string
+          format: date-time
+          example: '2026-04-16T09:00:00Z'
+
+    InvoiceSentData:
+      type: object
+      required:
+        - id
+        - ownerId
+        - walkerId
+        - total
+        - dueDate
+        - sentAt
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: ffee1122-3344-5566-7788-99aabbccddee
+        invoiceNumber:
+          type: string
+          nullable: true
+          example: INV-2026-0042
+        ownerId:
+          type: string
+          format: uuid
+          example: 3fa85f64-5717-4562-b3fc-2c963f66afa6
+        walkerId:
+          type: string
+          format: uuid
+          example: 7b1e4d2a-1234-5678-abcd-ef0123456789
+        total:
+          type: number
+          format: float
+          example: 45.00
+        dueDate:
+          type: string
+          format: date
+          example: '2026-04-30'
+        sentAt:
+          type: string
+          format: date-time
+          example: '2026-04-16T09:30:00Z'
+
+    InvoicePaidData:
+      type: object
+      required:
+        - id
+        - ownerId
+        - walkerId
+        - total
+        - paidAt
+        - paymentMethod
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: ffee1122-3344-5566-7788-99aabbccddee
+        invoiceNumber:
+          type: string
+          nullable: true
+          example: INV-2026-0042
+        ownerId:
+          type: string
+          format: uuid
+          example: 3fa85f64-5717-4562-b3fc-2c963f66afa6
+        walkerId:
+          type: string
+          format: uuid
+          example: 7b1e4d2a-1234-5678-abcd-ef0123456789
+        total:
+          type: number
+          format: float
+          example: 45.00
+        paidAt:
+          type: string
+          format: date-time
+          example: '2026-04-15T11:00:00Z'
+        paymentMethod:
+          type: string
+          enum:
+            - bank_transfer
+            - card
+            - cash
+            - other
+          example: bank_transfer
+        paymentReference:
+          type: string
+          nullable: true
+          example: TXN-20260415-001
+
+    InvoiceOverdueData:
+      type: object
+      required:
+        - id
+        - ownerId
+        - walkerId
+        - total
+        - dueDate
+        - overdueAt
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: ffee1122-3344-5566-7788-99aabbccddee
+        invoiceNumber:
+          type: string
+          nullable: true
+          example: INV-2026-0042
+        ownerId:
+          type: string
+          format: uuid
+          example: 3fa85f64-5717-4562-b3fc-2c963f66afa6
+        walkerId:
+          type: string
+          format: uuid
+          example: 7b1e4d2a-1234-5678-abcd-ef0123456789
+        total:
+          type: number
+          format: float
+          example: 45.00
+        dueDate:
+          type: string
+          format: date
+          example: '2026-04-30'
+        overdueAt:
+          type: string
+          format: date-time
+          description: Timestamp when the overdue transition was applied
+          example: '2026-05-01T00:01:00Z'
+
+    # --- Recurring Walk data --------------------------------------------------
+
+    RecurringWalkCreatedData:
+      type: object
+      required:
+        - id
+        - ownerId
+        - dogIds
+        - walkType
+        - durationMinutes
+        - frequency
+        - dayOfWeek
+        - startTime
+        - startDate
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: c9d0e1f2-a3b4-5678-cdef-012345678901
+        ownerId:
+          type: string
+          format: uuid
+          example: 3fa85f64-5717-4562-b3fc-2c963f66afa6
+        dogIds:
+          type: array
+          minItems: 1
+          items:
+            type: string
+            format: uuid
+          example:
+            - c1a2b3d4-5678-90ab-cdef-1234567890ab
+        walkType:
+          $ref: '#/components/schemas/WalkType'
+        durationMinutes:
+          type: integer
+          example: 60
+        frequency:
+          type: string
+          enum:
+            - weekly
+            - fortnightly
+          example: weekly
+        dayOfWeek:
+          type: string
+          enum:
+            - monday
+            - tuesday
+            - wednesday
+            - thursday
+            - friday
+            - saturday
+            - sunday
+          example: monday
+        startTime:
+          type: string
+          example: '09:00:00Z'
+        startDate:
+          type: string
+          format: date
+          example: '2026-05-05'
+        endDate:
+          type: string
+          format: date
+          nullable: true
+          example: null
+        createdAt:
+          type: string
+          format: date-time
+          example: '2026-04-01T10:00:00Z'
+
+    RecurringWalkStatusChangedData:
+      type: object
+      description: |
+        Payload for recurring walk paused, resumed, and cancelled events.
+        Use the `type` field in the CloudEvents envelope to distinguish
+        between `com.stardogwalker.recurring-walk.paused`,
+        `com.stardogwalker.recurring-walk.resumed`, and
+        `com.stardogwalker.recurring-walk.cancelled`.
+      required:
+        - id
+        - ownerId
+        - status
+        - changedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: c9d0e1f2-a3b4-5678-cdef-012345678901
+        ownerId:
+          type: string
+          format: uuid
+          example: 3fa85f64-5717-4562-b3fc-2c963f66afa6
+        status:
+          type: string
+          enum:
+            - active
+            - paused
+            - cancelled
+          description: New status of the recurring walk schedule
+          example: paused
+        changedAt:
+          type: string
+          format: date-time
+          example: '2026-04-15T08:00:00Z'
+
+    # --- CloudEvents envelopes (base + typed data) ----------------------------
+
+    InterestRequestSubmittedEnvelope:
+      allOf:
+        - $ref: '#/components/schemas/CloudEventBase'
+        - type: object
+          required:
+            - data
+          properties:
+            type:
+              const: com.stardogwalker.interest-request.submitted
+            data:
+              $ref: '#/components/schemas/InterestRequestSubmittedData'
+      example:
+        specversion: "1.0"
+        id: 7b1e4d2a-1111-2222-3333-aaaaaaaaaaaa
+        type: com.stardogwalker.interest-request.submitted
+        source: https://api.dogwalking.example.com/v1
+        subject: aabb1122-ccdd-3344-eeff-556677889900
+        time: '2026-03-28T10:00:00Z'
+        datacontenttype: application/json
+        data:
+          id: aabb1122-ccdd-3344-eeff-556677889900
+          firstName: Sarah
+          lastName: Davies
+          email: sarah.davies@example.com
+          postcode: CF10 1AB
+          createdAt: '2026-03-28T10:00:00Z'
+
+    InterestRequestAcceptedEnvelope:
+      allOf:
+        - $ref: '#/components/schemas/CloudEventBase'
+        - type: object
+          required:
+            - data
+          properties:
+            type:
+              const: com.stardogwalker.interest-request.accepted
+            data:
+              $ref: '#/components/schemas/InterestRequestAcceptedData'
+      example:
+        specversion: "1.0"
+        id: 7b1e4d2a-1111-2222-3333-bbbbbbbbbbbb
+        type: com.stardogwalker.interest-request.accepted
+        source: https://api.dogwalking.example.com/v1
+        subject: aabb1122-ccdd-3344-eeff-556677889900
+        time: '2026-03-28T11:00:00Z'
+        datacontenttype: application/json
+        data:
+          id: aabb1122-ccdd-3344-eeff-556677889900
+          ownerId: 3fa85f64-5717-4562-b3fc-2c963f66afa6
+          firstName: Sarah
+          lastName: Davies
+          email: sarah.davies@example.com
+          acceptedAt: '2026-03-28T11:00:00Z'
+
+    InterestRequestDeclinedEnvelope:
+      allOf:
+        - $ref: '#/components/schemas/CloudEventBase'
+        - type: object
+          required:
+            - data
+          properties:
+            type:
+              const: com.stardogwalker.interest-request.declined
+            data:
+              $ref: '#/components/schemas/InterestRequestDeclinedData'
+      example:
+        specversion: "1.0"
+        id: 7b1e4d2a-1111-2222-3333-cccccccccccc
+        type: com.stardogwalker.interest-request.declined
+        source: https://api.dogwalking.example.com/v1
+        subject: aabb1122-ccdd-3344-eeff-556677889900
+        time: '2026-03-28T11:00:00Z'
+        datacontenttype: application/json
+        data:
+          id: aabb1122-ccdd-3344-eeff-556677889900
+          email: sarah.davies@example.com
+          declineReason: We are not currently covering the CF5 area.
+          declinedAt: '2026-03-28T11:00:00Z'
+
+    WalkRequestSubmittedEnvelope:
+      allOf:
+        - $ref: '#/components/schemas/CloudEventBase'
+        - type: object
+          required:
+            - data
+          properties:
+            type:
+              const: com.stardogwalker.walk-request.submitted
+            data:
+              $ref: '#/components/schemas/WalkRequestSubmittedData'
+      example:
+        specversion: "1.0"
+        id: 7b1e4d2a-1111-2222-3333-dddddddddddd
+        type: com.stardogwalker.walk-request.submitted
+        source: https://api.dogwalking.example.com/v1
+        subject: aa11bb22-cc33-dd44-ee55-ff6677889900
+        time: '2026-03-28T12:00:00Z'
+        datacontenttype: application/json
+        data:
+          id: aa11bb22-cc33-dd44-ee55-ff6677889900
+          ownerId: 3fa85f64-5717-4562-b3fc-2c963f66afa6
+          dogIds:
+            - c1a2b3d4-5678-90ab-cdef-1234567890ab
+          requestedDate: '2026-04-10'
+          requestedStartTime: '09:00:00Z'
+          durationMinutes: 60
+          walkType: solo_walk
+          preferredWalkerId: null
+          submittedAt: '2026-03-28T12:00:00Z'
+
+    WalkRequestAcceptedEnvelope:
+      allOf:
+        - $ref: '#/components/schemas/CloudEventBase'
+        - type: object
+          required:
+            - data
+          properties:
+            type:
+              const: com.stardogwalker.walk-request.accepted
+            data:
+              $ref: '#/components/schemas/WalkRequestAcceptedData'
+      example:
+        specversion: "1.0"
+        id: 7b1e4d2a-1111-2222-3333-eeeeeeeeeeee
+        type: com.stardogwalker.walk-request.accepted
+        source: https://api.dogwalking.example.com/v1
+        subject: aa11bb22-cc33-dd44-ee55-ff6677889900
+        time: '2026-03-28T14:00:00Z'
+        datacontenttype: application/json
+        data:
+          id: aa11bb22-cc33-dd44-ee55-ff6677889900
+          walkId: dd00ee11-ff22-aa33-bb44-cc5566778899
+          ownerId: 3fa85f64-5717-4562-b3fc-2c963f66afa6
+          walkerId: 7b1e4d2a-1234-5678-abcd-ef0123456789
+          scheduledDate: '2026-04-10'
+          scheduledStartTime: '09:00:00Z'
+          durationMinutes: 60
+          walkType: solo_walk
+          agreedRate: 18.00
+          acceptedAt: '2026-03-28T14:00:00Z'
+
+    WalkRequestDeclinedEnvelope:
+      allOf:
+        - $ref: '#/components/schemas/CloudEventBase'
+        - type: object
+          required:
+            - data
+          properties:
+            type:
+              const: com.stardogwalker.walk-request.declined
+            data:
+              $ref: '#/components/schemas/WalkRequestDeclinedData'
+      example:
+        specversion: "1.0"
+        id: 7b1e4d2a-1111-2222-3333-ffffffffffff
+        type: com.stardogwalker.walk-request.declined
+        source: https://api.dogwalking.example.com/v1
+        subject: aa11bb22-cc33-dd44-ee55-ff6677889900
+        time: '2026-03-28T14:30:00Z'
+        datacontenttype: application/json
+        data:
+          id: aa11bb22-cc33-dd44-ee55-ff6677889900
+          ownerId: 3fa85f64-5717-4562-b3fc-2c963f66afa6
+          declineReason: I am fully booked on that date.
+          declinedAt: '2026-03-28T14:30:00Z'
+
+    WalkRequestCancelledEnvelope:
+      allOf:
+        - $ref: '#/components/schemas/CloudEventBase'
+        - type: object
+          required:
+            - data
+          properties:
+            type:
+              const: com.stardogwalker.walk-request.cancelled
+            data:
+              $ref: '#/components/schemas/WalkRequestCancelledData'
+
+    WalkScheduledEnvelope:
+      allOf:
+        - $ref: '#/components/schemas/CloudEventBase'
+        - type: object
+          required:
+            - data
+          properties:
+            type:
+              const: com.stardogwalker.walk.scheduled
+            data:
+              $ref: '#/components/schemas/WalkScheduledData'
+
+    WalkStartedEnvelope:
+      allOf:
+        - $ref: '#/components/schemas/CloudEventBase'
+        - type: object
+          required:
+            - data
+          properties:
+            type:
+              const: com.stardogwalker.walk.started
+            data:
+              $ref: '#/components/schemas/WalkStartedData'
+      example:
+        specversion: "1.0"
+        id: 7b1e4d2a-1111-2222-3333-111111111111
+        type: com.stardogwalker.walk.started
+        source: https://api.dogwalking.example.com/v1
+        subject: dd00ee11-ff22-aa33-bb44-cc5566778899
+        time: '2026-04-10T09:01:00Z'
+        datacontenttype: application/json
+        data:
+          id: dd00ee11-ff22-aa33-bb44-cc5566778899
+          ownerId: 3fa85f64-5717-4562-b3fc-2c963f66afa6
+          walkerId: 7b1e4d2a-1234-5678-abcd-ef0123456789
+          actualStartTime: '2026-04-10T09:01:00Z'
+
+    WalkUpdatePostedEnvelope:
+      allOf:
+        - $ref: '#/components/schemas/CloudEventBase'
+        - type: object
+          required:
+            - data
+          properties:
+            type:
+              const: com.stardogwalker.walk.update-posted
+            data:
+              $ref: '#/components/schemas/WalkUpdatePostedData'
+      example:
+        specversion: "1.0"
+        id: 7b1e4d2a-1111-2222-3333-222222222222
+        type: com.stardogwalker.walk.update-posted
+        source: https://api.dogwalking.example.com/v1
+        subject: dd00ee11-ff22-aa33-bb44-cc5566778899
+        time: '2026-04-10T09:30:00Z'
+        datacontenttype: application/json
+        data:
+          updateId: 11223344-5566-7788-99aa-bbccddeeff00
+          walkId: dd00ee11-ff22-aa33-bb44-cc5566778899
+          ownerId: 3fa85f64-5717-4562-b3fc-2c963f66afa6
+          type: image
+          note: null
+          imageUrl: https://storage.dogwalking.example.com/walks/dd00ee11/max-river.jpg
+          imageCaption: Max splashing in the river!
+          createdAt: '2026-04-10T09:30:00Z'
+
+    WalkCompletedEnvelope:
+      allOf:
+        - $ref: '#/components/schemas/CloudEventBase'
+        - type: object
+          required:
+            - data
+          properties:
+            type:
+              const: com.stardogwalker.walk.completed
+            data:
+              $ref: '#/components/schemas/WalkCompletedData'
+      example:
+        specversion: "1.0"
+        id: 7b1e4d2a-1111-2222-3333-333333333333
+        type: com.stardogwalker.walk.completed
+        source: https://api.dogwalking.example.com/v1
+        subject: dd00ee11-ff22-aa33-bb44-cc5566778899
+        time: '2026-04-10T10:05:00Z'
+        datacontenttype: application/json
+        data:
+          id: dd00ee11-ff22-aa33-bb44-cc5566778899
+          ownerId: 3fa85f64-5717-4562-b3fc-2c963f66afa6
+          walkerId: 7b1e4d2a-1234-5678-abcd-ef0123456789
+          actualEndTime: '2026-04-10T10:05:00Z'
+          distanceKm: 3.2
+          summaryNotes: Max was very well behaved today!
+          completedAt: '2026-04-10T10:05:00Z'
+
+    WalkCancelledEnvelope:
+      allOf:
+        - $ref: '#/components/schemas/CloudEventBase'
+        - type: object
+          required:
+            - data
+          properties:
+            type:
+              const: com.stardogwalker.walk.cancelled
+            data:
+              $ref: '#/components/schemas/WalkCancelledData'
+
+    InvoiceCreatedEnvelope:
+      allOf:
+        - $ref: '#/components/schemas/CloudEventBase'
+        - type: object
+          required:
+            - data
+          properties:
+            type:
+              const: com.stardogwalker.invoice.created
+            data:
+              $ref: '#/components/schemas/InvoiceCreatedData'
+
+    InvoiceSentEnvelope:
+      allOf:
+        - $ref: '#/components/schemas/CloudEventBase'
+        - type: object
+          required:
+            - data
+          properties:
+            type:
+              const: com.stardogwalker.invoice.sent
+            data:
+              $ref: '#/components/schemas/InvoiceSentData'
+      example:
+        specversion: "1.0"
+        id: 7b1e4d2a-1111-2222-3333-444444444444
+        type: com.stardogwalker.invoice.sent
+        source: https://api.dogwalking.example.com/v1
+        subject: ffee1122-3344-5566-7788-99aabbccddee
+        time: '2026-04-16T09:30:00Z'
+        datacontenttype: application/json
+        data:
+          id: ffee1122-3344-5566-7788-99aabbccddee
+          invoiceNumber: INV-2026-0042
+          ownerId: 3fa85f64-5717-4562-b3fc-2c963f66afa6
+          walkerId: 7b1e4d2a-1234-5678-abcd-ef0123456789
+          total: 45.00
+          dueDate: '2026-04-30'
+          sentAt: '2026-04-16T09:30:00Z'
+
+    InvoicePaidEnvelope:
+      allOf:
+        - $ref: '#/components/schemas/CloudEventBase'
+        - type: object
+          required:
+            - data
+          properties:
+            type:
+              const: com.stardogwalker.invoice.paid
+            data:
+              $ref: '#/components/schemas/InvoicePaidData'
+      example:
+        specversion: "1.0"
+        id: 7b1e4d2a-1111-2222-3333-555555555555
+        type: com.stardogwalker.invoice.paid
+        source: https://api.dogwalking.example.com/v1
+        subject: ffee1122-3344-5566-7788-99aabbccddee
+        time: '2026-04-15T11:00:00Z'
+        datacontenttype: application/json
+        data:
+          id: ffee1122-3344-5566-7788-99aabbccddee
+          invoiceNumber: INV-2026-0042
+          ownerId: 3fa85f64-5717-4562-b3fc-2c963f66afa6
+          walkerId: 7b1e4d2a-1234-5678-abcd-ef0123456789
+          total: 45.00
+          paidAt: '2026-04-15T11:00:00Z'
+          paymentMethod: bank_transfer
+          paymentReference: TXN-20260415-001
+
+    InvoiceOverdueEnvelope:
+      allOf:
+        - $ref: '#/components/schemas/CloudEventBase'
+        - type: object
+          required:
+            - data
+          properties:
+            type:
+              const: com.stardogwalker.invoice.overdue
+            data:
+              $ref: '#/components/schemas/InvoiceOverdueData'
+      example:
+        specversion: "1.0"
+        id: 7b1e4d2a-1111-2222-3333-666666666666
+        type: com.stardogwalker.invoice.overdue
+        source: https://api.dogwalking.example.com/v1
+        subject: ffee1122-3344-5566-7788-99aabbccddee
+        time: '2026-05-01T00:01:00Z'
+        datacontenttype: application/json
+        data:
+          id: ffee1122-3344-5566-7788-99aabbccddee
+          invoiceNumber: INV-2026-0042
+          ownerId: 3fa85f64-5717-4562-b3fc-2c963f66afa6
+          walkerId: 7b1e4d2a-1234-5678-abcd-ef0123456789
+          total: 45.00
+          dueDate: '2026-04-30'
+          overdueAt: '2026-05-01T00:01:00Z'
+
+    RecurringWalkCreatedEnvelope:
+      allOf:
+        - $ref: '#/components/schemas/CloudEventBase'
+        - type: object
+          required:
+            - data
+          properties:
+            type:
+              const: com.stardogwalker.recurring-walk.created
+            data:
+              $ref: '#/components/schemas/RecurringWalkCreatedData'
+      example:
+        specversion: "1.0"
+        id: 7b1e4d2a-1111-2222-3333-777777777777
+        type: com.stardogwalker.recurring-walk.created
+        source: https://api.dogwalking.example.com/v1
+        subject: c9d0e1f2-a3b4-5678-cdef-012345678901
+        time: '2026-04-01T10:00:00Z'
+        datacontenttype: application/json
+        data:
+          id: c9d0e1f2-a3b4-5678-cdef-012345678901
+          ownerId: 3fa85f64-5717-4562-b3fc-2c963f66afa6
+          dogIds:
+            - c1a2b3d4-5678-90ab-cdef-1234567890ab
+          walkType: solo_walk
+          durationMinutes: 60
+          frequency: weekly
+          dayOfWeek: monday
+          startTime: '09:00:00Z'
+          startDate: '2026-05-05'
+          endDate: null
+          createdAt: '2026-04-01T10:00:00Z'
+
+    RecurringWalkStatusChangedEnvelope:
+      allOf:
+        - $ref: '#/components/schemas/CloudEventBase'
+        - type: object
+          required:
+            - data
+          properties:
+            data:
+              $ref: '#/components/schemas/RecurringWalkStatusChangedData'
+      example:
+        specversion: "1.0"
+        id: 7b1e4d2a-1111-2222-3333-888888888888
+        type: com.stardogwalker.recurring-walk.paused
+        source: https://api.dogwalking.example.com/v1
+        subject: c9d0e1f2-a3b4-5678-cdef-012345678901
+        time: '2026-04-15T08:00:00Z'
+        datacontenttype: application/json
+        data:
+          id: c9d0e1f2-a3b4-5678-cdef-012345678901
+          ownerId: 3fa85f64-5717-4562-b3fc-2c963f66afa6
+          status: paused
+          changedAt: '2026-04-15T08:00:00Z'
