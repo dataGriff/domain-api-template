@@ -18,7 +18,7 @@ Before writing or modifying any code in `api/`, check the relevant spec document
 
 ## Naming
 
-All entity names, attribute names, and relationship names must exactly match `docs/specs/domain-model.md`. Do not invent synonyms or rename things (e.g. use `walkRequest` not `bookingRequest`, `owner` not `client`).
+All entity names, attribute names, and relationship names must exactly match `docs/specs/domain-model.md`. Do not invent synonyms or rename things (e.g. use the exact entity name from the domain model, not an alias).
 
 ## Access control
 

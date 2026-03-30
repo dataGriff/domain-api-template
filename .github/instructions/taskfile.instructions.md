@@ -19,16 +19,16 @@ New tasks belong in `Taskfile.api.yml` unless they are project-wide (linting, do
 Follow the existing `namespace:resource:action` pattern:
 
 ```
-api:walks:list          # list all walks
-api:walks:get           # get a single walk
-api:walks:start         # perform an action on a walk
-api:walk-requests:create
-api:auth:register:walker
+api:items:list          # list all items
+api:items:get           # get a single item
+api:items:create        # create an item
+api:items:update        # update an item
+api:auth:register:contributor
 ```
 
-- Namespaces are lowercase, hyphen-separated (`walk-requests`, not `walkRequests`)
+- Namespaces are lowercase, hyphen-separated (`line-items`, not `lineItems`)
 - Use consistent verbs: `list`, `get`, `create`, `update`, `delete`, `start`, `complete`, `cancel`, `submit`, `accept`, `decline`, `send`
-- Qualifier (`walker`, `owner`) goes last when disambiguating
+- Qualifier (e.g. a role name like `contributor`) goes last when disambiguating
 
 ## Required fields for every new task
 

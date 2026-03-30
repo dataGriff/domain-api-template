@@ -38,9 +38,9 @@ Edit the files in `docs/specifications/` in this recommended order:
 
 With specs complete, implement the API to match:
 
-- `api/src/store.js` — Replace dog-walking entities with your domain's entities
-- `api/src/routes/` — Replace dog-walking routes with routes matching your OpenAPI spec
-- `api/tests/` — Replace dog-walking tests with tests for your routes and auth matrix
+- `api/src/store.js` — Replace example entities with your domain's entities
+- `api/src/routes/` — Replace example routes with routes matching your OpenAPI spec
+- `api/tests/` — Replace example tests with tests for your routes and auth matrix
 
 ### Step 4: Validate
 
