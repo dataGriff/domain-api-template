@@ -124,7 +124,7 @@ tasks:
           -H "Authorization: Bearer {{.CONTRIBUTOR_TOKEN}}" \
           -d "{
             \"name\": \"Demo Item {{.DEMO_ID}}\",
-            \"description\": \"An item created during the demo run.\"
+            \"description\": \"An item added during the demo run.\"
           }")
         echo "$RESPONSE" | jq .
         ITEM_ID=$(echo "$RESPONSE" | jq -r '.id')
@@ -189,7 +189,7 @@ tasks:
         sh: grep '^VIEWER_TOKEN=' {{.STATE}} 2>/dev/null | cut -d= -f2-
     cmds:
       - |
-        echo "Attempting to create as viewer (should be 403):"
+        echo "Attempting to add as viewer (should be 403):"
         curl -s -X POST {{.BASE_URL}}/items \
           -H "Content-Type: application/json" \
           -H "Authorization: Bearer {{.VIEWER_TOKEN}}" \

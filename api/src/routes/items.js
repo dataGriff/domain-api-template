@@ -13,7 +13,7 @@ router.get('/', authenticate, (req, res) => {
   res.status(200).json({ data, pagination: { page, pageSize, total } });
 });
 
-// POST /items — create an item (contributor only)
+// POST /items — add an item (contributor only)
 router.post('/', authenticate, requireRole('contributor'), (req, res) => {
   const { name, description } = req.body;
   const now = new Date().toISOString();
@@ -39,7 +39,7 @@ router.get('/:itemId', authenticate, (req, res) => {
   res.status(200).json(item);
 });
 
-// PATCH /items/:itemId — update an item (contributor, own only)
+// PATCH /items/:itemId — edit an item (contributor, own only)
 // Note: field validation (e.g. status enum) is enforced upstream by the OpenAPI validator middleware.
 router.patch('/:itemId', authenticate, requireRole('contributor'), (req, res) => {
   const item = store.items.get(req.params.itemId);
@@ -47,7 +47,7 @@ router.patch('/:itemId', authenticate, requireRole('contributor'), (req, res) =>
     return res.status(404).json({ code: 'RESOURCE_NOT_FOUND', message: 'Item not found.' });
   }
   if (item.contributorId !== req.user.sub) {
-    return res.status(403).json({ code: 'FORBIDDEN', message: 'You can only update your own items.' });
+    return res.status(403).json({ code: 'FORBIDDEN', message: 'You can only edit your own items.' });
   }
   const { name, description, status } = req.body;
   if (name !== undefined) item.name = name;
@@ -58,14 +58,14 @@ router.patch('/:itemId', authenticate, requireRole('contributor'), (req, res) =>
   res.status(200).json(item);
 });
 
-// DELETE /items/:itemId — delete an item (contributor, own only)
+// DELETE /items/:itemId — remove an item (contributor, own only)
 router.delete('/:itemId', authenticate, requireRole('contributor'), (req, res) => {
   const item = store.items.get(req.params.itemId);
   if (!item) {
     return res.status(404).json({ code: 'RESOURCE_NOT_FOUND', message: 'Item not found.' });
   }
   if (item.contributorId !== req.user.sub) {
-    return res.status(403).json({ code: 'FORBIDDEN', message: 'You can only delete your own items.' });
+    return res.status(403).json({ code: 'FORBIDDEN', message: 'You can only remove your own items.' });
   }
   store.items.delete(item.id);
   res.status(204).send();

@@ -50,7 +50,7 @@ Represents a named entry in the catalogue, owned by a contributor.
 
 **Business Rules:**
 - `status` defaults to `active` on creation.
-- Only the contributor who created an item may update or delete it.
+- Only the contributor who added an item may edit or remove it.
 - Viewers may list and view any item but cannot modify them.
 
 ---
@@ -77,9 +77,9 @@ Item ──── belongs to ─────────────────
 
 | Event | Trigger | Channel |
 |-------|---------|---------|
-| `ItemCreated` | POST /v1/items → 201 | `items.item.created` |
-| `ItemUpdated` | PATCH /v1/items/{itemId} → 200 | `items.item.updated` |
-| `ItemDeleted` | DELETE /v1/items/{itemId} → 204 | `items.item.deleted` |
+| `ItemAdded` | POST /v1/items → 201 | `items.item.added` |
+| `ItemEdited` | PATCH /v1/items/{itemId} → 200 | `items.item.edited` |
+| `ItemRemoved` | DELETE /v1/items/{itemId} → 204 | `items.item.removed` |
 
 ---
 

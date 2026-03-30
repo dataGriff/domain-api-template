@@ -18,7 +18,7 @@ The **Items** domain provides a minimal, working example that anyone can underst
 
 ### Contributor
 
-A user who can create and manage their own items.
+A user who can add and manage their own items.
 
 - **Goal:** Add items to the catalogue and keep them up to date.
 - **Frustration:** Too many steps to add a simple item; can't easily archive old items.

@@ -151,7 +151,7 @@ paths:
               $ref: '#/components/schemas/CreateItemRequest'
       responses:
         '201':
-          description: Item created successfully
+          description: Item added successfully
           content:
             application/json:
               schema:
@@ -202,7 +202,7 @@ paths:
               $ref: '#/components/schemas/UpdateItemRequest'
       responses:
         '200':
-          description: Item updated successfully
+          description: Item edited successfully
           content:
             application/json:
               schema:
@@ -227,7 +227,7 @@ paths:
         - $ref: '#/components/parameters/ItemId'
       responses:
         '204':
-          description: Item deleted successfully
+          description: Item removed successfully
         '401':
           $ref: '#/components/responses/AuthenticationError'
         '403':
@@ -362,7 +362,7 @@ components:
         contributorId:
           type: string
           format: uuid
-          description: ID of the user who created this item
+          description: ID of the contributor who added this item
         createdAt:
           type: string
           format: date-time

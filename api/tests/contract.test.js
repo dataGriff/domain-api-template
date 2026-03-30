@@ -87,7 +87,7 @@ describe('Contract Tests - Response Shapes', () => {
       expect(res.body).toHaveProperty('contributorId');
     });
 
-    it('PATCH /v1/items/:itemId returns 200 with updated Item shape', async () => {
+    it('PATCH /v1/items/:itemId returns 200 with edited Item shape', async () => {
       const { token, user } = await createContributorToken();
       const item = seedItem(user.id);
       const res = await request(app).patch(`/v1/items/${item.id}`)

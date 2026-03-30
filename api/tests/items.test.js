@@ -39,7 +39,7 @@ describe('Items routes', () => {
   });
 
   describe('POST /v1/items', () => {
-    it('creates an item as contributor', async () => {
+    it('adds an item as contributor', async () => {
       const { token } = await createContributorToken();
       const res = await request(app).post('/v1/items')
         .set('Authorization', `Bearer ${token}`)
@@ -54,7 +54,7 @@ describe('Items routes', () => {
       expect(res.body.updatedAt).toBeDefined();
     });
 
-    it('creates an item with null description when omitted', async () => {
+    it('adds an item with null description when omitted', async () => {
       const { token } = await createContributorToken();
       const res = await request(app).post('/v1/items')
         .set('Authorization', `Bearer ${token}`)
@@ -63,7 +63,7 @@ describe('Items routes', () => {
       expect(res.body.description).toBeNull();
     });
 
-    it('returns 403 when viewer tries to create', async () => {
+    it('returns 403 when viewer tries to add', async () => {
       const { token } = await createViewerToken();
       const res = await request(app).post('/v1/items')
         .set('Authorization', `Bearer ${token}`)
@@ -112,7 +112,7 @@ describe('Items routes', () => {
   });
 
   describe('PATCH /v1/items/:itemId', () => {
-    it('contributor can update their own item', async () => {
+    it('contributor can edit their own item', async () => {
       const { token, user } = await createContributorToken();
       const item = seedItem(user.id);
       const res = await request(app).patch(`/v1/items/${item.id}`)
@@ -123,7 +123,7 @@ describe('Items routes', () => {
       expect(res.body.status).toBe('archived');
     });
 
-    it('returns 403 when updating another contributor\'s item', async () => {
+    it('returns 403 when editing another contributor\'s item', async () => {
       const { user: creator } = await createContributorToken();
       const item = seedItem(creator.id);
       const { token: otherToken } = await createContributorToken();
@@ -133,7 +133,7 @@ describe('Items routes', () => {
       expect(res.status).toBe(403);
     });
 
-    it('returns 403 when viewer tries to update', async () => {
+    it('returns 403 when viewer tries to edit', async () => {
       const { user } = await createContributorToken();
       const item = seedItem(user.id);
       const { token: vToken } = await createViewerToken();
@@ -154,7 +154,7 @@ describe('Items routes', () => {
   });
 
   describe('DELETE /v1/items/:itemId', () => {
-    it('contributor can delete their own item', async () => {
+    it('contributor can remove their own item', async () => {
       const { token, user } = await createContributorToken();
       const item = seedItem(user.id);
       const res = await request(app).delete(`/v1/items/${item.id}`)
@@ -162,7 +162,7 @@ describe('Items routes', () => {
       expect(res.status).toBe(204);
     });
 
-    it('returns 403 when deleting another contributor\'s item', async () => {
+    it('returns 403 when removing another contributor\'s item', async () => {
       const { user: creator } = await createContributorToken();
       const item = seedItem(creator.id);
       const { token: otherToken } = await createContributorToken();
@@ -171,7 +171,7 @@ describe('Items routes', () => {
       expect(res.status).toBe(403);
     });
 
-    it('returns 403 when viewer tries to delete', async () => {
+    it('returns 403 when viewer tries to remove', async () => {
       const { user } = await createContributorToken();
       const item = seedItem(user.id);
       const { token: vToken } = await createViewerToken();

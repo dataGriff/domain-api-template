@@ -25,53 +25,53 @@ defaultContentType: application/json
 
 tags:
   - name: Items
-    description: Events related to item lifecycle (created, updated, deleted)
+    description: Events related to the item lifecycle
 
 channels:
-  items.item.created:
-    description: Published whenever a new item is created by a contributor.
+  items.item.added:
+    description: Published whenever a new item is added to the catalogue by a contributor.
     publish:
-      operationId: onItemCreated
-      description: Consume item created events to react to new items being added to the catalogue.
+      operationId: onItemAdded
+      description: Consume item added events to react to new items being added to the catalogue.
       tags:
         - name: Items
       message:
-        $ref: '#/components/messages/ItemCreated'
+        $ref: '#/components/messages/ItemAdded'
 
-  items.item.updated:
+  items.item.edited:
     description: Published whenever an item's name, description, or status is changed.
     publish:
-      operationId: onItemUpdated
-      description: Consume item updated events to keep downstream systems in sync with item changes.
+      operationId: onItemEdited
+      description: Consume item edited events to keep downstream systems in sync with item changes.
       tags:
         - name: Items
       message:
-        $ref: '#/components/messages/ItemUpdated'
+        $ref: '#/components/messages/ItemEdited'
 
-  items.item.deleted:
-    description: Published whenever an item is deleted by its contributor.
+  items.item.removed:
+    description: Published whenever an item is removed from the catalogue by its contributor.
     publish:
-      operationId: onItemDeleted
-      description: Consume item deleted events to remove references to items in downstream systems.
+      operationId: onItemRemoved
+      description: Consume item removed events to remove references to items in downstream systems.
       tags:
         - name: Items
       message:
-        $ref: '#/components/messages/ItemDeleted'
+        $ref: '#/components/messages/ItemRemoved'
 
 components:
   messages:
-    ItemCreated:
-      name: ItemCreated
-      title: Item Created
-      summary: A new item has been created.
+    ItemAdded:
+      name: ItemAdded
+      title: Item Added
+      summary: A new item has been added to the catalogue.
       contentType: application/json
       payload:
-        $ref: '#/components/schemas/ItemCreatedEvent'
+        $ref: '#/components/schemas/ItemAddedEvent'
       examples:
-        - name: item-created-example
+        - name: item-added-example
           payload:
             specversion: "1.0"
-            type: items.item.created
+            type: items.item.added
             source: /items
             id: a1b2c3d4-0000-0000-0000-000000000001
             time: "2026-06-01T09:00:00Z"
@@ -85,43 +85,43 @@ components:
               createdAt: "2026-06-01T09:00:00Z"
               updatedAt: "2026-06-01T09:00:00Z"
 
-    ItemUpdated:
-      name: ItemUpdated
-      title: Item Updated
-      summary: An existing item has been updated.
+    ItemEdited:
+      name: ItemEdited
+      title: Item Edited
+      summary: An existing item has been edited.
       contentType: application/json
       payload:
-        $ref: '#/components/schemas/ItemUpdatedEvent'
+        $ref: '#/components/schemas/ItemEditedEvent'
       examples:
-        - name: item-updated-example
+        - name: item-edited-example
           payload:
             specversion: "1.0"
-            type: items.item.updated
+            type: items.item.edited
             source: /items
             id: a1b2c3d4-0000-0000-0000-000000000004
             time: "2026-06-02T10:00:00Z"
             datacontenttype: application/json
             data:
               id: a1b2c3d4-0000-0000-0000-000000000002
-              name: My Updated Item
+              name: My Edited Item
               description: An updated description
               status: archived
               contributorId: a1b2c3d4-0000-0000-0000-000000000003
               createdAt: "2026-06-01T09:00:00Z"
               updatedAt: "2026-06-02T10:00:00Z"
 
-    ItemDeleted:
-      name: ItemDeleted
-      title: Item Deleted
-      summary: An item has been deleted.
+    ItemRemoved:
+      name: ItemRemoved
+      title: Item Removed
+      summary: An item has been removed from the catalogue.
       contentType: application/json
       payload:
-        $ref: '#/components/schemas/ItemDeletedEvent'
+        $ref: '#/components/schemas/ItemRemovedEvent'
       examples:
-        - name: item-deleted-example
+        - name: item-removed-example
           payload:
             specversion: "1.0"
-            type: items.item.deleted
+            type: items.item.removed
             source: /items
             id: a1b2c3d4-0000-0000-0000-000000000005
             time: "2026-06-03T11:00:00Z"
@@ -129,7 +129,7 @@ components:
             data:
               id: a1b2c3d4-0000-0000-0000-000000000002
               contributorId: a1b2c3d4-0000-0000-0000-000000000003
-              deletedAt: "2026-06-03T11:00:00Z"
+              removedAt: "2026-06-03T11:00:00Z"
 
   schemas:
     CloudEventBase:
@@ -180,7 +180,7 @@ components:
           type: string
           format: date-time
 
-    ItemCreatedEvent:
+    ItemAddedEvent:
       allOf:
         - $ref: '#/components/schemas/CloudEventBase'
         - type: object
@@ -189,7 +189,7 @@ components:
             data:
               $ref: '#/components/schemas/ItemData'
 
-    ItemUpdatedEvent:
+    ItemEditedEvent:
       allOf:
         - $ref: '#/components/schemas/CloudEventBase'
         - type: object
@@ -198,7 +198,7 @@ components:
             data:
               $ref: '#/components/schemas/ItemData'
 
-    ItemDeletedEvent:
+    ItemRemovedEvent:
       allOf:
         - $ref: '#/components/schemas/CloudEventBase'
         - type: object
@@ -206,7 +206,7 @@ components:
           properties:
             data:
               type: object
-              required: [id, contributorId, deletedAt]
+              required: [id, contributorId, removedAt]
               properties:
                 id:
                   type: string
@@ -214,6 +214,6 @@ components:
                 contributorId:
                   type: string
                   format: uuid
-                deletedAt:
+                removedAt:
                   type: string
                   format: date-time
