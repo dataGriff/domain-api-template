@@ -1,188 +1,53 @@
-# Authorisation Matrix
+# Auth Matrix — Items
 
-This document defines which roles are permitted to perform each operation.
-It is independent of technical implementation — HTTP methods and API paths
-are defined in `openapi.yaml`.
+> **Example domain.** This is the working reference implementation included with the Domain API Template.
+> Replace this file with your own auth matrix by running `task domain:init`.
 
 ---
 
 ## Roles
 
-| Role       | Description                                               |
-|------------|-----------------------------------------------------------|
-| **Owner**  | A registered dog owner who books walks for their dogs     |
-| **Walker** | The dog walker; manages the business and all operational data |
-
----
-
-## Notation
-
-| Symbol     | Meaning                                                          |
-|------------|------------------------------------------------------------------|
-| ✓          | Permitted for all records of this type                           |
-| `own`      | Permitted for the user's own record(s) only                      |
-| `assigned` | Permitted only for records the walker is assigned to             |
-| `pending`  | Permitted for records in `pending` status, plus their own        |
-| ✗          | Not permitted                                                    |
-| `public`   | No authentication required                                       |
-
----
-
-## Interest Requests
-
-| Operation                   | Public | Owner | Walker |
-|-----------------------------|--------|-------|--------|
-| Submit an interest request  | ✓      | ✗     | ✗      |
-| List interest requests      | ✗      | ✗     | ✓      |
-| View an interest request    | ✗      | ✗     | ✓      |
-| Add internal notes          | ✗      | ✗     | ✓      |
-| Accept an interest request  | ✗      | ✗     | ✓      |
-| Decline an interest request | ✗      | ✗     | ✓      |
-
-> **Note:** Interest request submission requires no account. The response
-> returns minimal data only (id and submission timestamp) to avoid exposing
-> internal state to anonymous callers. Internal notes and the linked owner
-> record are never visible to unauthenticated callers.
-
----
+| Role | Description |
+|------|-------------|
+| `contributor` | Can create items and update/delete their own items |
+| `viewer` | Read-only access to items |
 
 ## Authentication
 
-| Operation       | Public | Owner | Walker |
-|-----------------|--------|-------|--------|
-| Register        | `public`| ✗    | ✗      |
-| Log in          | `public`| `public`| `public`|
-| Log out         | ✗      | ✓     | ✓      |
-| Refresh session | `public`| `public`| `public`|
+All protected routes require a `Bearer` JWT token in the `Authorization` header.
+Unauthenticated requests to protected routes return `401 Unauthorized`.
 
----
+Tokens are issued via `POST /v1/auth/login` and refreshed via `POST /v1/auth/refresh`.
 
-## Owners
+## Auth Matrix
 
-| Operation    | Owner | Walker |
-|--------------|-------|--------|
-| List owners  | ✗     | ✓      |
-| Create owner | ✗     | ✓      |
-| View owner   | `own` | ✓      |
-| Update owner | `own` | ✓      |
-| Delete owner | ✗     | ✓      |
+| Operation | Endpoint | Public | contributor | viewer |
+|-----------|----------|--------|-------------|--------|
+| Register | `POST /v1/auth/register` | 🌐 | �� | 🌐 |
+| Login | `POST /v1/auth/login` | 🌐 | 🌐 | 🌐 |
+| Refresh token | `POST /v1/auth/refresh` | 🌐 | 🌐 | 🌐 |
+| Logout | `POST /v1/auth/logout` | ❌ | ✅ | ✅ |
+| List items | `GET /v1/items` | ❌ | ✅ | ✅ |
+| Create item | `POST /v1/items` | ❌ | ✅ | ❌ |
+| Get item | `GET /v1/items/{itemId}` | ❌ | ✅ | ✅ |
+| Update item | `PATCH /v1/items/{itemId}` | ❌ | ✅ own | ❌ |
+| Delete item | `DELETE /v1/items/{itemId}` | ❌ | ✅ own | ❌ |
 
-> **Note:** Owner accounts are created automatically when the walker accepts
-> an interest request. The walker can update or remove owner records. Owners
-> can view and update only their own profile.
+Legend:
+- 🌐 Public (no auth required)
+- ✅ Allowed
+- ✅ own — Allowed only if `item.contributorId === req.user.sub`
+- ❌ Forbidden
 
----
+## Ownership Rule
 
-## Walkers
+A `contributor` may only update or delete items where `item.contributorId` matches their user ID (`req.user.sub`). Attempting to modify another contributor's item returns `403 Forbidden`.
 
-| Operation     | Owner | Walker |
-|---------------|-------|--------|
-| List walkers  | ✓     | `own`  |
-| Create walker | ✗     | ✓      |
-| View walker   | ✓     | `own`  |
-| Update walker | ✗     | `own`  |
-| Delete walker | ✗     | `own`  |
+## Error Responses
 
-> **Note:** Owners can view the walker profile (including rate card) to
-> understand services and pricing. The walker manages her own profile only.
-
----
-
-## Dogs
-
-| Operation              | Owner | Walker     |
-|------------------------|-------|------------|
-| List dogs for an owner | `own` | `assigned` |
-| Add a dog              | `own` | ✗          |
-| View a dog             | `own` | `assigned` |
-| Update a dog           | `own` | ✗          |
-| Delete a dog           | `own` | ✗          |
-
-> **Note:** Walkers can view dog details (including medical and behaviour
-> notes) only for dogs on a walk they are assigned to.
-
----
-
-## Walk Requests
-
-| Operation              | Owner           | Walker            |
-|------------------------|-----------------|-------------------|
-| List walk requests     | `own`           | `pending` + `own` |
-| Submit a walk request  | ✓               | ✗                 |
-| View a walk request    | `own`           | `pending` + `own` |
-| Update a walk request  | `own` (pending) | ✗                 |
-| Cancel a walk request  | `own` (pending) | ✗                 |
-| Accept a walk request  | ✗               | ✓                 |
-| Decline a walk request | ✗               | ✓                 |
-
-> **Note:** Walkers can see all pending requests (to choose which to accept)
-> plus requests they have already acted on. Owners can only modify or cancel
-> their own requests while they remain pending.
-
----
-
-## Walks
-
-| Operation       | Owner | Walker     |
-|-----------------|-------|------------|
-| List walks      | `own` | `assigned` |
-| View a walk     | `own` | `assigned` |
-| Update a walk   | ✗     | `assigned` |
-| Start a walk    | ✗     | `assigned` |
-| Complete a walk | ✗     | `assigned` |
-| Cancel a walk   | `own` | `assigned` |
-
-> **Note:** Only the assigned walker can start, complete, or update a walk.
-> Both the owner and the assigned walker may cancel a scheduled walk.
-
----
-
-## Walk Updates
-
-| Operation            | Owner | Walker                     |
-|----------------------|-------|----------------------------|
-| List walk updates    | `own` | `assigned`                 |
-| Post a walk update   | ✗     | `assigned` (`in_progress`) |
-| View a walk update   | `own` | `assigned`                 |
-| Delete a walk update | ✗     | `assigned` (own update)    |
-
-> **Note:** Walkers may only post updates while the walk is in progress.
-> Owners can read all updates for their own walks in real time.
-
----
-
-## Invoices
-
-| Operation         | Owner | Walker        |
-|-------------------|-------|---------------|
-| List invoices     | `own` | ✓             |
-| Create an invoice | ✗     | ✓             |
-| View an invoice   | `own` | ✓             |
-| Update an invoice | ✗     | `own` (draft) |
-| Send an invoice   | ✗     | `own` (draft) |
-| Mark as paid      | `own` | ✗             |
-
-> **Note:** Only the walker can raise invoices. Sending transitions the
-> invoice from `draft` to `sent`; only a draft invoice can be sent. Only the
-> owner to whom the invoice is addressed can mark it as paid. The walker can
-> see all invoices across all clients. A walker can only edit or send an
-> invoice while it is in draft.
-
----
-
-## Recurring Walks
-
-| Operation                      | Owner | Walker     |
-|--------------------------------|-------|------------|
-| List recurring walks           | `own` | ✓          |
-| Create a recurring walk        | ✓     | ✗          |
-| View a recurring walk          | `own` | ✓          |
-| Update a recurring walk        | `own` | ✗          |
-| Pause a recurring walk         | `own` | ✗          |
-| Resume a recurring walk        | `own` | ✗          |
-| Cancel a recurring walk        | `own` | ✗          |
-
-> **Note:** Owners create and manage recurring walk schedules. The walker
-> has read access to all recurring walk schedules to plan capacity. Pausing
-> suspends future WalkRequest generation without losing the schedule;
-> cancelling is permanent and prevents new WalkRequests from being generated.
+| Scenario | HTTP Status | Error Code |
+|----------|-------------|------------|
+| No token provided | `401` | `AUTHENTICATION_REQUIRED` |
+| Token expired | `401` | `TOKEN_EXPIRED` |
+| Valid token, wrong role | `403` | `FORBIDDEN` |
+| Valid token, not item owner | `403` | `FORBIDDEN` |

@@ -1,171 +1,135 @@
-# Product Requirements Document – Stardogwalker
+# Product Requirements Document — Items
 
-**Business:** Stardogwalker – Cardiff, South Wales  
-**Last updated:** March 2026  
-**Status:** Living document
-
-This document describes the problems being solved, the people affected, and
-the capabilities the product must have. It does not prescribe implementation
-order or technical approach.
+> **Example domain.** This is the working reference implementation included with the Domain API Template.
+> It is intentionally simple. Replace the contents of `docs/specifications/` with your own domain
+> by running `task domain:init` and editing the generated files.
 
 ---
 
-## 1. Problem Statement
+## Problem Statement
 
-Stardogwalker is a sole-trader dog walking business operating in Cardiff,
-South Wales. Today the business is run entirely through informal channels —
-WhatsApp messages, phone calls, and cash payments. This creates a number of
-real daily frictions:
+Teams building new APIs need a consistent, spec-driven starting point that demonstrates all the key patterns (auth, RBAC, CRUD, pagination, events) without domain complexity getting in the way.
 
-- Walk bookings get lost or forgotten in chat threads
-- There is no single place to record which dogs are being walked, when, and for how long
-- Dog medical and behavioural information is held in the walker's memory or scattered notes, creating a safety risk
-- Invoicing is done manually and tracking outstanding payments is difficult
-- Dog owners have no visibility of their dog during a walk
+**Business:** Domain API Template — reusable scaffold.
 
-There is also no way for potential new clients to discover or contact the business online — all new clients come through word of mouth or personal referral.
+The **Items** domain provides a minimal, working example that anyone can understand in minutes.
 
-The goal of this product is to replace informal coordination with a simple, professional platform purpose-built for Stardogwalker, and to make the business publicly discoverable so potential clients can find and register their interest online. The platform must support multiple interaction channels — web, mobile, chat, and agentic AI — from the same backend, without duplication of business logic.
+## Target Users / Personas
 
----
+### Contributor
 
-## 2. Goals
+A user who can create and manage their own items.
 
-| Goal | Measure of success |
-|---|---|
-| Make the business discoverable online | Public marketing site indexed by search engines at launch |
-| Build a client backlog | Interest requests captured in the app rather than via WhatsApp |
-| Eliminate missed or double-booked walks | Zero scheduling conflicts after launch |
-| Give dog owners peace of mind during walks | Owners receive at least one photo or note per walk |
-| Remove manual invoicing effort | All invoices created and tracked in the app |
-| Maintain a safe central record of dog information | All active client dogs have a complete profile in the app |
-| Professional client experience | Clients able to self-serve bookings without WhatsApp |
-| Multi-channel reach | Same API serves web, mobile, chat, and agentic clients without backend changes |
+- **Goal:** Add items to the catalogue and keep them up to date.
+- **Frustration:** Too many steps to create a simple item; can't easily archive old items.
 
----
+### Viewer
 
-## 3. User Personas
+A user who can browse the item catalogue but cannot make changes.
 
-### Persona 1 – The Prospective Client
+- **Goal:** Find and view items without clutter.
+- **Frustration:** Accidental edits by other users affecting their view.
 
-**Who:** Member of the public in Cardiff, South Wales searching for a dog walker.
+## Goals
 
-**Needs:**
-- Find a professional online presence when searching locally
-- Learn about services, walk types, and the walker
-- Register interest without making a phone call
-- Receive a response and, if accepted, become a client automatically
+1. Provide a minimal, running API example that demonstrates authentication, RBAC, CRUD, and pagination.
+2. Keep the example simple enough that any developer can grasp the full domain in under 5 minutes.
+3. Show — not just describe — the template patterns so they are easy to replicate in a new domain.
 
----
+## Non-Goals
 
-### Persona 2 – The Dog Walker
+1. A real product use case (items has no real business meaning).
+2. Complex state machines, nested resources, or domain events beyond simple lifecycle events.
+3. Persistent storage — the in-memory store resets on restart.
 
-**Who:** The sole trader running Stardogwalker, Cardiff, South Wales.
-
-**Needs:**
-- See a clear daily schedule without managing a chat thread
-- Access dog medical, behaviour, and access notes instantly before a walk
-- Record walk activity (photos, notes, distance) from a mobile device during a walk
-- Create and send invoices quickly at the end of each period
-- Track which invoices are outstanding
-
----
-
-### Persona 3 – The Dog Owner
-
-**Who:** Registered client in Cardiff, South Wales.
-
-**Needs:**
-- Submit and track walk bookings without WhatsApp
-- See live updates and photos during their dog's walk
-- View invoices and record payment in one place
-
----
-
-## 4. Functional Requirements
-
-The product must provide the following capabilities.
-
-### Discoverability
-
-- A public-facing marketing site, indexable by search engines, that describes Stardogwalker's services, walk types, and how to get in touch
-- A public interest registration form requiring no account, capturing name, email, phone number, postcode, and a description of the dog(s)
-- A walker-only backlog of submitted interest requests, with the ability to accept or decline each one with an optional reason
-- When the walker accepts an interest request, the prospective client is automatically registered as a dog owner and receives an invitation to set up their account
+## User Stories
 
 ### Authentication
 
-- Users can register, log in, and log out
-- Sessions can be extended without re-entering credentials
-- Roles: dog owner, dog walker
+#### US-001: Register as a contributor or viewer
 
-### Owner and Dog Management
+**As a** new user,
+**I want to** register with an email, password, and role,
+**So that** I can access the API.
 
-- Dog owners can create and manage their own profile
-- Dog owners can create and manage profiles for each of their dogs, including breed, date of birth, medical notes, behaviour notes, and vet contact details
-- The walker can view dog profiles for any dog on an assigned walk
+**Acceptance Criteria:**
+- [x] POST /v1/auth/register accepts `contributor` or `viewer` role
+- [x] Returns access token + refresh token on success
+- [x] Returns 409 if email already registered
 
-### Walker and Rate Card Management
+#### US-002: Log in and receive tokens
 
-- The walker can create and manage her profile
-- The walker can define a rate card specifying a price per walk type, number of dogs, and duration
-- The system resolves the agreed rate automatically when a walk is accepted; if no matching rate exists, the acceptance is blocked with a clear message
+**As a** registered user,
+**I want to** log in with my email and password,
+**So that** I can get a fresh access token.
 
-### Walk Requests
+**Acceptance Criteria:**
+- [x] POST /v1/auth/login returns 200 with tokens on valid credentials
+- [x] Returns 401 on invalid credentials
 
-- Dog owners can submit a walk request specifying date, time, duration, walk type, and which dogs to include
-- Dog owners can cancel a pending request
-- Dog owners can view the status of their requests
-- The walker can view all pending requests and accept or decline each one
-- When a request is accepted, a scheduled walk is created with the agreed rate applied
-- Owners are notified when their request is accepted or declined
+### Items
 
-### Walk Execution
+#### US-003: Create an item
 
-- The walker can mark a walk as started and as completed, recording end time, distance, and summary notes
-- The walker can cancel a scheduled walk with a reason
-- Dog owners can cancel a scheduled walk before it has started
-- The walker can post photo and text updates during a walk
-- Dog owners can view updates and the walk summary at any time
+**As a** contributor,
+**I want to** create a new item with a name and optional description,
+**So that** it appears in the catalogue.
 
-### Invoicing
+**Acceptance Criteria:**
+- [x] POST /v1/items creates an item with `status: active`
+- [x] Item is associated with the authenticated contributor's ID
+- [x] Viewers cannot create items (403)
 
-- The walker can create invoices covering one or more completed walks
-- The walker can send an invoice to the relevant dog owner
-- Dog owners can view their invoices and record payment
-- The walker can see which invoices are outstanding
-- Invoices past their due date are automatically flagged as overdue
-- Dog owners can pay invoices online without a manual bank transfer
+#### US-004: List all items
 
-### Recurring Walks
+**As a** contributor or viewer,
+**I want to** list all items with pagination,
+**So that** I can browse the catalogue.
 
-- Dog owners can set up a recurring walk schedule so they do not need to rebook manually each week
+**Acceptance Criteria:**
+- [x] GET /v1/items returns paginated list
+- [x] Both roles can list items
 
----
+#### US-005: View a single item
 
-## 5. Channel Strategy
+**As a** contributor or viewer,
+**I want to** view the details of a single item,
+**So that** I can see its full information.
 
-The platform serves multiple interaction channels from a single backend. All
-business logic is centralised; no channel re-implements it.
+**Acceptance Criteria:**
+- [x] GET /v1/items/:itemId returns the item
+- [x] Returns 404 if not found
 
-| Channel | Notes |
-|---|---|
-| Web app (browser, mobile-responsive) | Primary launch channel |
-| Native mobile app (iOS / Android) | Second channel; no backend changes required |
-| Email notifications | Triggered by domain events |
-| Chat interface (WhatsApp / SMS bot) | Natural language over the same backend |
-| Agentic app (AI agent / LLM tool use) | Programmatic access over the same backend |
+#### US-006: Update my own item
 
----
+**As a** contributor,
+**I want to** update the name, description, or status of an item I created,
+**So that** I can keep the catalogue accurate.
 
-## 6. Non-Functional Requirements
+**Acceptance Criteria:**
+- [x] PATCH /v1/items/:itemId updates the item
+- [x] Returns 403 if the item belongs to a different contributor
+- [x] Viewers cannot update items (403)
 
-| Requirement | Target |
-|---|---|
-| **Availability** | 99.5% uptime during business hours (07:00–20:00 GMT) |
-| **Response time** | All responses returned within 500ms under normal load |
-| **Security** | All endpoints authenticated; HTTPS only; passwords stored with a strong one-way hash; OWASP Top 10 mitigations applied |
-| **Data residency** | All data stored in UK data centres (GDPR compliance) |
-| **Photo storage** | Walk update photos stored separately from the main database |
-| **Mobile-friendly** | Web app fully usable on a mobile phone without a native app install |
+#### US-007: Delete my own item
 
+**As a** contributor,
+**I want to** delete an item I created,
+**So that** it is removed from the catalogue.
+
+**Acceptance Criteria:**
+- [x] DELETE /v1/items/:itemId deletes the item
+- [x] Returns 403 if the item belongs to a different contributor
+- [x] Viewers cannot delete items (403)
+
+## Constraints
+
+1. In-memory store only (no database).
+2. No real business domain — items are intentionally generic.
+3. JavaScript (Node.js/Express) only.
+
+## Success Metrics
+
+1. All tests pass — `task api:test`.
+2. OpenAPI and AsyncAPI lint cleanly — `task lint`.
+3. A new developer can understand the full domain in under 5 minutes.

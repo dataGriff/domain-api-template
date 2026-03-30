@@ -2,6 +2,9 @@
 
 A spec-driven, contract-first REST API template — ready to be instantiated for any business domain.
 
+> The **Items** example domain is included as a working reference implementation.
+> [See the README](https://github.com/dataGriff/domain-api-template#readme) for the full "How to use this template" guide.
+
 ## Documentation
 
 | Document | Description |
@@ -13,15 +16,14 @@ A spec-driven, contract-first REST API template — ready to be instantiated for
 | [**Interactive API Reference →**](specifications/api-reference.html) | Full REST API contract with live try-it-out and multi-language code samples |
 | [**AsyncAPI Event Reference →**](specifications/asyncapi-reference.html) | Full domain event catalogue with CloudEvents 1.0 schemas and AMQP channel bindings |
 
-## Overview
+## Example Domain: Items
 
-This template provides a complete, working Node.js/Express API structured around the **specs-first** approach:
+The included example is a minimal **Items catalogue** — two roles (`contributor`, `viewer`) and one resource (`items`):
 
-- **Specifications** in `docs/specifications/` are the source of truth
-- **Code** in `api/` must conform to the specifications
-- **Tasks** in `Taskfile.yml` and `Taskfile.api.yml` automate everything
+- **Authentication** — Register, log in, refresh tokens, log out (JWT-based)
+- **Items** — Contributors can create, update, and delete their own items; viewers can list and read
 
-The example domain included is a **dog-walking management platform** — demonstrating the full pattern from specs through to a working, tested API.
+This is intentionally generic so the template patterns are easy to spot and replace.
 
 ## Using This Template
 
@@ -32,8 +34,6 @@ To use this template for a new domain:
 3. Fill in your domain specifications
 4. Implement routes and tests to match
 5. Run `task domain:check` to validate
-
-See the [README](https://github.com/dataGriff/domain-api-template#readme) for the full checklist.
 
 ## API Contracts
 

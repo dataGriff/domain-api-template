@@ -19,11 +19,11 @@ tasks:
       - echo "Demo state cleared."
 
   # ---------------------------------------------------------------------------
-  # 1. AUTH
+  # AUTH
   # ---------------------------------------------------------------------------
 
-  auth:register:walker:
-    desc: Register a walker (saves WALKER_TOKEN)
+  auth:register:contributor:
+    desc: Register a contributor (saves CONTRIBUTOR_TOKEN)
     vars:
       DEMO_ID:
         sh: grep '^DEMO_ID=' {{.STATE}} 2>/dev/null | cut -d= -f2-
@@ -32,20 +32,20 @@ tasks:
         RESPONSE=$(curl -s -X POST {{.BASE_URL}}/auth/register \
           -H "Content-Type: application/json" \
           -d "{
-            \"email\": \"jane.walker.{{.DEMO_ID}}@example.com\",
+            \"email\": \"contributor.{{.DEMO_ID}}@example.com\",
             \"password\": \"password123\",
-            \"firstName\": \"Jane\",
-            \"lastName\": \"Walker\",
-            \"role\": \"walker\"
+            \"firstName\": \"Alice\",
+            \"lastName\": \"Contributor\",
+            \"role\": \"contributor\"
           }")
         echo "$RESPONSE" | jq .
         TOKEN=$(echo "$RESPONSE" | jq -r '.accessToken')
-        grep -v "^WALKER_TOKEN=" {{.STATE}} > {{.STATE}}.tmp 2>/dev/null || true
-        echo "WALKER_TOKEN=$TOKEN" >> {{.STATE}}.tmp
+        grep -v "^CONTRIBUTOR_TOKEN=" {{.STATE}} > {{.STATE}}.tmp 2>/dev/null || true
+        echo "CONTRIBUTOR_TOKEN=$TOKEN" >> {{.STATE}}.tmp
         mv {{.STATE}}.tmp {{.STATE}}
 
-  auth:register:owner:
-    desc: Register an owner (saves OWNER_TOKEN)
+  auth:register:viewer:
+    desc: Register a viewer (saves VIEWER_TOKEN)
     vars:
       DEMO_ID:
         sh: grep '^DEMO_ID=' {{.STATE}} 2>/dev/null | cut -d= -f2-
@@ -54,20 +54,20 @@ tasks:
         RESPONSE=$(curl -s -X POST {{.BASE_URL}}/auth/register \
           -H "Content-Type: application/json" \
           -d "{
-            \"email\": \"john.owner.{{.DEMO_ID}}@example.com\",
+            \"email\": \"viewer.{{.DEMO_ID}}@example.com\",
             \"password\": \"password123\",
-            \"firstName\": \"John\",
-            \"lastName\": \"Owner\",
-            \"role\": \"owner\"
+            \"firstName\": \"Bob\",
+            \"lastName\": \"Viewer\",
+            \"role\": \"viewer\"
           }")
         echo "$RESPONSE" | jq .
         TOKEN=$(echo "$RESPONSE" | jq -r '.accessToken')
-        grep -v "^OWNER_TOKEN=" {{.STATE}} > {{.STATE}}.tmp 2>/dev/null || true
-        echo "OWNER_TOKEN=$TOKEN" >> {{.STATE}}.tmp
+        grep -v "^VIEWER_TOKEN=" {{.STATE}} > {{.STATE}}.tmp 2>/dev/null || true
+        echo "VIEWER_TOKEN=$TOKEN" >> {{.STATE}}.tmp
         mv {{.STATE}}.tmp {{.STATE}}
 
-  auth:login:walker:
-    desc: Login as walker (saves WALKER_TOKEN and WALKER_REFRESH_TOKEN)
+  auth:login:contributor:
+    desc: Login as contributor (saves CONTRIBUTOR_TOKEN)
     vars:
       DEMO_ID:
         sh: grep '^DEMO_ID=' {{.STATE}} 2>/dev/null | cut -d= -f2-
@@ -76,808 +76,157 @@ tasks:
         RESPONSE=$(curl -s -X POST {{.BASE_URL}}/auth/login \
           -H "Content-Type: application/json" \
           -d "{
-            \"email\": \"jane.walker.{{.DEMO_ID}}@example.com\",
+            \"email\": \"contributor.{{.DEMO_ID}}@example.com\",
             \"password\": \"password123\"
           }")
         echo "$RESPONSE" | jq .
         TOKEN=$(echo "$RESPONSE" | jq -r '.accessToken')
-        REFRESH=$(echo "$RESPONSE" | jq -r '.refreshToken')
-        grep -v "^WALKER_TOKEN=\|^WALKER_REFRESH_TOKEN=" {{.STATE}} > {{.STATE}}.tmp 2>/dev/null || true
-        echo "WALKER_TOKEN=$TOKEN" >> {{.STATE}}.tmp
-        echo "WALKER_REFRESH_TOKEN=$REFRESH" >> {{.STATE}}.tmp
-        mv {{.STATE}}.tmp {{.STATE}}
-
-  auth:refresh:
-    desc: Refresh the walker access token
-    vars:
-      WALKER_REFRESH_TOKEN:
-        sh: grep '^WALKER_REFRESH_TOKEN=' {{.STATE}} 2>/dev/null | cut -d= -f2-
-    cmds:
-      - |
-        RESPONSE=$(curl -s -X POST {{.BASE_URL}}/auth/refresh \
-          -H "Content-Type: application/json" \
-          -d '{"refreshToken": "{{.WALKER_REFRESH_TOKEN}}"}')
-        echo "$RESPONSE" | jq .
-        TOKEN=$(echo "$RESPONSE" | jq -r '.accessToken')
-        grep -v "^WALKER_TOKEN=" {{.STATE}} > {{.STATE}}.tmp 2>/dev/null || true
-        echo "WALKER_TOKEN=$TOKEN" >> {{.STATE}}.tmp
+        grep -v "^CONTRIBUTOR_TOKEN=" {{.STATE}} > {{.STATE}}.tmp 2>/dev/null || true
+        echo "CONTRIBUTOR_TOKEN=$TOKEN" >> {{.STATE}}.tmp
         mv {{.STATE}}.tmp {{.STATE}}
 
   auth:logout:
-    desc: Logout (invalidates walker token)
+    desc: Logout (invalidate the contributor session)
     vars:
-      WALKER_TOKEN:
-        sh: grep '^WALKER_TOKEN=' {{.STATE}} 2>/dev/null | cut -d= -f2-
+      CONTRIBUTOR_TOKEN:
+        sh: grep '^CONTRIBUTOR_TOKEN=' {{.STATE}} 2>/dev/null | cut -d= -f2-
     cmds:
       - |
         curl -s -X POST {{.BASE_URL}}/auth/logout \
-          -H "Authorization: Bearer {{.WALKER_TOKEN}}" | jq .
+          -H "Authorization: Bearer {{.CONTRIBUTOR_TOKEN}}"
+        echo "Logged out."
 
   # ---------------------------------------------------------------------------
-  # 2. INTEREST REQUESTS
+  # ITEMS
   # ---------------------------------------------------------------------------
 
-  interest:submit:
-    desc: Submit an interest request — public, no auth (saves INTEREST_REQUEST_ID)
+  items:list:
+    desc: List all items (uses CONTRIBUTOR_TOKEN)
+    vars:
+      CONTRIBUTOR_TOKEN:
+        sh: grep '^CONTRIBUTOR_TOKEN=' {{.STATE}} 2>/dev/null | cut -d= -f2-
+    cmds:
+      - |
+        curl -s -X GET {{.BASE_URL}}/items \
+          -H "Authorization: Bearer {{.CONTRIBUTOR_TOKEN}}" | jq .
+
+  items:create:
+    desc: Create a new item (saves ITEM_ID)
     vars:
       DEMO_ID:
         sh: grep '^DEMO_ID=' {{.STATE}} 2>/dev/null | cut -d= -f2-
+      CONTRIBUTOR_TOKEN:
+        sh: grep '^CONTRIBUTOR_TOKEN=' {{.STATE}} 2>/dev/null | cut -d= -f2-
     cmds:
       - |
-        RESPONSE=$(curl -s -X POST {{.BASE_URL}}/interest-requests \
+        RESPONSE=$(curl -s -X POST {{.BASE_URL}}/items \
           -H "Content-Type: application/json" \
+          -H "Authorization: Bearer {{.CONTRIBUTOR_TOKEN}}" \
           -d "{
-            \"firstName\": \"Sarah\",
-            \"lastName\": \"Davies\",
-            \"email\": \"sarah.davies.{{.DEMO_ID}}@example.com\",
-            \"phone\": \"+44 7700 900789\",
-            \"postcode\": \"CF10 1AB\",
-            \"dogDescription\": \"A friendly 3-year-old Labrador called Buddy.\"
+            \"name\": \"Demo Item {{.DEMO_ID}}\",
+            \"description\": \"An item created during the demo run.\"
           }")
         echo "$RESPONSE" | jq .
-        ID=$(echo "$RESPONSE" | jq -r '.id')
-        grep -v "^INTEREST_REQUEST_ID=" {{.STATE}} > {{.STATE}}.tmp 2>/dev/null || true
-        echo "INTEREST_REQUEST_ID=$ID" >> {{.STATE}}.tmp
+        ITEM_ID=$(echo "$RESPONSE" | jq -r '.id')
+        grep -v "^ITEM_ID=" {{.STATE}} > {{.STATE}}.tmp 2>/dev/null || true
+        echo "ITEM_ID=$ITEM_ID" >> {{.STATE}}.tmp
         mv {{.STATE}}.tmp {{.STATE}}
 
-  interest:list:
-    desc: List all interest requests (walker only)
+  items:get:
+    desc: Get the demo item by ID
     vars:
-      WALKER_TOKEN:
-        sh: grep '^WALKER_TOKEN=' {{.STATE}} 2>/dev/null | cut -d= -f2-
+      CONTRIBUTOR_TOKEN:
+        sh: grep '^CONTRIBUTOR_TOKEN=' {{.STATE}} 2>/dev/null | cut -d= -f2-
+      ITEM_ID:
+        sh: grep '^ITEM_ID=' {{.STATE}} 2>/dev/null | cut -d= -f2-
     cmds:
       - |
-        curl -s {{.BASE_URL}}/interest-requests \
-          -H "Authorization: Bearer {{.WALKER_TOKEN}}" | jq .
+        curl -s -X GET {{.BASE_URL}}/items/{{.ITEM_ID}} \
+          -H "Authorization: Bearer {{.CONTRIBUTOR_TOKEN}}" | jq .
 
-  interest:get:
-    desc: Get a single interest request (walker only)
+  items:update:
+    desc: Archive the demo item
     vars:
-      WALKER_TOKEN:
-        sh: grep '^WALKER_TOKEN=' {{.STATE}} 2>/dev/null | cut -d= -f2-
-      INTEREST_REQUEST_ID:
-        sh: grep '^INTEREST_REQUEST_ID=' {{.STATE}} 2>/dev/null | cut -d= -f2-
+      CONTRIBUTOR_TOKEN:
+        sh: grep '^CONTRIBUTOR_TOKEN=' {{.STATE}} 2>/dev/null | cut -d= -f2-
+      ITEM_ID:
+        sh: grep '^ITEM_ID=' {{.STATE}} 2>/dev/null | cut -d= -f2-
     cmds:
       - |
-        curl -s {{.BASE_URL}}/interest-requests/{{.INTEREST_REQUEST_ID}} \
-          -H "Authorization: Bearer {{.WALKER_TOKEN}}" | jq .
-
-  interest:accept:
-    desc: Accept an interest request (walker only)
-    vars:
-      WALKER_TOKEN:
-        sh: grep '^WALKER_TOKEN=' {{.STATE}} 2>/dev/null | cut -d= -f2-
-      INTEREST_REQUEST_ID:
-        sh: grep '^INTEREST_REQUEST_ID=' {{.STATE}} 2>/dev/null | cut -d= -f2-
-    cmds:
-      - |
-        curl -s -X POST {{.BASE_URL}}/interest-requests/{{.INTEREST_REQUEST_ID}}/accept \
-          -H "Authorization: Bearer {{.WALKER_TOKEN}}" \
+        curl -s -X PATCH {{.BASE_URL}}/items/{{.ITEM_ID}} \
           -H "Content-Type: application/json" \
-          -d '{"notes": "Looking forward to meeting Buddy!"}' | jq .
+          -H "Authorization: Bearer {{.CONTRIBUTOR_TOKEN}}" \
+          -d '{"status": "archived"}' | jq .
 
-  interest:decline:
-    desc: Decline an interest request (walker only)
+  items:delete:
+    desc: Delete the demo item
     vars:
-      WALKER_TOKEN:
-        sh: grep '^WALKER_TOKEN=' {{.STATE}} 2>/dev/null | cut -d= -f2-
-      INTEREST_REQUEST_ID:
-        sh: grep '^INTEREST_REQUEST_ID=' {{.STATE}} 2>/dev/null | cut -d= -f2-
+      CONTRIBUTOR_TOKEN:
+        sh: grep '^CONTRIBUTOR_TOKEN=' {{.STATE}} 2>/dev/null | cut -d= -f2-
+      ITEM_ID:
+        sh: grep '^ITEM_ID=' {{.STATE}} 2>/dev/null | cut -d= -f2-
     cmds:
       - |
-        curl -s -X POST {{.BASE_URL}}/interest-requests/{{.INTEREST_REQUEST_ID}}/decline \
-          -H "Authorization: Bearer {{.WALKER_TOKEN}}" \
+        STATUS=$(curl -s -o /dev/null -w "%{http_code}" -X DELETE \
+          {{.BASE_URL}}/items/{{.ITEM_ID}} \
+          -H "Authorization: Bearer {{.CONTRIBUTOR_TOKEN}}")
+        echo "DELETE /items/{{.ITEM_ID}} → HTTP $STATUS"
+
+  items:list:viewer:
+    desc: List items as a viewer (demonstrates read-only access)
+    vars:
+      VIEWER_TOKEN:
+        sh: grep '^VIEWER_TOKEN=' {{.STATE}} 2>/dev/null | cut -d= -f2-
+    cmds:
+      - |
+        curl -s -X GET {{.BASE_URL}}/items \
+          -H "Authorization: Bearer {{.VIEWER_TOKEN}}" | jq .
+
+  items:create:viewer:
+    desc: Attempt to create an item as a viewer (expects 403 Forbidden)
+    vars:
+      VIEWER_TOKEN:
+        sh: grep '^VIEWER_TOKEN=' {{.STATE}} 2>/dev/null | cut -d= -f2-
+    cmds:
+      - |
+        echo "Attempting to create as viewer (should be 403):"
+        curl -s -X POST {{.BASE_URL}}/items \
           -H "Content-Type: application/json" \
-          -d '{"declineReason": "Not currently covering the CF5 area."}' | jq .
+          -H "Authorization: Bearer {{.VIEWER_TOKEN}}" \
+          -d '{"name": "Forbidden Item"}' | jq .
 
   # ---------------------------------------------------------------------------
-  # 3. OWNERS
+  # DEMO WORKFLOW
   # ---------------------------------------------------------------------------
-
-  owners:create:
-    desc: Create an owner (walker only, saves OWNER_ID)
-    vars:
-      WALKER_TOKEN:
-        sh: grep '^WALKER_TOKEN=' {{.STATE}} 2>/dev/null | cut -d= -f2-
-      DEMO_ID:
-        sh: grep '^DEMO_ID=' {{.STATE}} 2>/dev/null | cut -d= -f2-
-    cmds:
-      - |
-        RESPONSE=$(curl -s -X POST {{.BASE_URL}}/owners \
-          -H "Authorization: Bearer {{.WALKER_TOKEN}}" \
-          -H "Content-Type: application/json" \
-          -d "{
-            \"firstName\": \"John\",
-            \"lastName\": \"Owner\",
-            \"email\": \"john.owner2.{{.DEMO_ID}}@example.com\",
-            \"phone\": \"02920123456\"
-          }")
-        echo "$RESPONSE" | jq .
-        ID=$(echo "$RESPONSE" | jq -r '.id')
-        grep -v "^OWNER_ID=" {{.STATE}} > {{.STATE}}.tmp 2>/dev/null || true
-        echo "OWNER_ID=$ID" >> {{.STATE}}.tmp
-        mv {{.STATE}}.tmp {{.STATE}}
-
-  owners:list:
-    desc: List all owners (walker only)
-    vars:
-      WALKER_TOKEN:
-        sh: grep '^WALKER_TOKEN=' {{.STATE}} 2>/dev/null | cut -d= -f2-
-    cmds:
-      - |
-        curl -s {{.BASE_URL}}/owners \
-          -H "Authorization: Bearer {{.WALKER_TOKEN}}" | jq .
-
-  owners:get:
-    desc: Get a single owner
-    vars:
-      WALKER_TOKEN:
-        sh: grep '^WALKER_TOKEN=' {{.STATE}} 2>/dev/null | cut -d= -f2-
-      OWNER_ID:
-        sh: grep '^OWNER_ID=' {{.STATE}} 2>/dev/null | cut -d= -f2-
-    cmds:
-      - |
-        curl -s {{.BASE_URL}}/owners/{{.OWNER_ID}} \
-          -H "Authorization: Bearer {{.WALKER_TOKEN}}" | jq .
-
-  owners:update:
-    desc: Update an owner
-    vars:
-      WALKER_TOKEN:
-        sh: grep '^WALKER_TOKEN=' {{.STATE}} 2>/dev/null | cut -d= -f2-
-      OWNER_ID:
-        sh: grep '^OWNER_ID=' {{.STATE}} 2>/dev/null | cut -d= -f2-
-      DEMO_ID:
-        sh: grep '^DEMO_ID=' {{.STATE}} 2>/dev/null | cut -d= -f2-
-    cmds:
-      - |
-        curl -s -X PUT {{.BASE_URL}}/owners/{{.OWNER_ID}} \
-          -H "Authorization: Bearer {{.WALKER_TOKEN}}" \
-          -H "Content-Type: application/json" \
-          -d "{
-            \"firstName\": \"John\",
-            \"lastName\": \"Owner\",
-            \"email\": \"john.owner2.{{.DEMO_ID}}@example.com\",
-            \"phone\": \"02920999888\"
-          }" | jq .
-
-  # ---------------------------------------------------------------------------
-  # 4. WALKERS
-  # ---------------------------------------------------------------------------
-
-  walkers:create:
-    desc: Create a walker profile (walker only, saves WALKER_ID)
-    vars:
-      WALKER_TOKEN:
-        sh: grep '^WALKER_TOKEN=' {{.STATE}} 2>/dev/null | cut -d= -f2-
-      DEMO_ID:
-        sh: grep '^DEMO_ID=' {{.STATE}} 2>/dev/null | cut -d= -f2-
-    cmds:
-      - |
-        RESPONSE=$(curl -s -X POST {{.BASE_URL}}/walkers \
-          -H "Authorization: Bearer {{.WALKER_TOKEN}}" \
-          -H "Content-Type: application/json" \
-          -d "{
-            \"firstName\": \"Jane\",
-            \"lastName\": \"Walker\",
-            \"email\": \"jane.walker2.{{.DEMO_ID}}@example.com\",
-            \"phone\": \"02920111222\"
-          }")
-        echo "$RESPONSE" | jq .
-        ID=$(echo "$RESPONSE" | jq -r '.id')
-        grep -v "^WALKER_ID=" {{.STATE}} > {{.STATE}}.tmp 2>/dev/null || true
-        echo "WALKER_ID=$ID" >> {{.STATE}}.tmp
-        mv {{.STATE}}.tmp {{.STATE}}
-
-  walkers:list:
-    desc: List all walkers
-    vars:
-      WALKER_TOKEN:
-        sh: grep '^WALKER_TOKEN=' {{.STATE}} 2>/dev/null | cut -d= -f2-
-    cmds:
-      - |
-        curl -s {{.BASE_URL}}/walkers \
-          -H "Authorization: Bearer {{.WALKER_TOKEN}}" | jq .
-
-  walkers:get:
-    desc: Get a single walker
-    vars:
-      WALKER_TOKEN:
-        sh: grep '^WALKER_TOKEN=' {{.STATE}} 2>/dev/null | cut -d= -f2-
-      WALKER_ID:
-        sh: grep '^WALKER_ID=' {{.STATE}} 2>/dev/null | cut -d= -f2-
-    cmds:
-      - |
-        curl -s {{.BASE_URL}}/walkers/{{.WALKER_ID}} \
-          -H "Authorization: Bearer {{.WALKER_TOKEN}}" | jq .
-
-  walkers:update:
-    desc: Update a walker profile
-    vars:
-      WALKER_TOKEN:
-        sh: grep '^WALKER_TOKEN=' {{.STATE}} 2>/dev/null | cut -d= -f2-
-      WALKER_ID:
-        sh: grep '^WALKER_ID=' {{.STATE}} 2>/dev/null | cut -d= -f2-
-      DEMO_ID:
-        sh: grep '^DEMO_ID=' {{.STATE}} 2>/dev/null | cut -d= -f2-
-    cmds:
-      - |
-        curl -s -X PUT {{.BASE_URL}}/walkers/{{.WALKER_ID}} \
-          -H "Authorization: Bearer {{.WALKER_TOKEN}}" \
-          -H "Content-Type: application/json" \
-          -d "{
-            \"firstName\": \"Jane\",
-            \"lastName\": \"Walker\",
-            \"email\": \"jane.walker2.{{.DEMO_ID}}@example.com\",
-            \"phone\": \"02920999111\",
-            \"bio\": \"Experienced dog walker covering Cardiff city centre.\"
-          }" | jq .
-
-  # ---------------------------------------------------------------------------
-  # 5. DOGS
-  # ---------------------------------------------------------------------------
-
-  dogs:add:
-    desc: Add a dog to an owner (saves DOG_ID)
-    vars:
-      WALKER_TOKEN:
-        sh: grep '^WALKER_TOKEN=' {{.STATE}} 2>/dev/null | cut -d= -f2-
-      OWNER_ID:
-        sh: grep '^OWNER_ID=' {{.STATE}} 2>/dev/null | cut -d= -f2-
-    cmds:
-      - |
-        RESPONSE=$(curl -s -X POST {{.BASE_URL}}/owners/{{.OWNER_ID}}/dogs \
-          -H "Authorization: Bearer {{.WALKER_TOKEN}}" \
-          -H "Content-Type: application/json" \
-          -d '{
-            "name": "Buddy",
-            "breed": "Labrador",
-            "dateOfBirth": "2022-03-15"
-          }')
-        echo "$RESPONSE" | jq .
-        ID=$(echo "$RESPONSE" | jq -r '.id')
-        grep -v "^DOG_ID=" {{.STATE}} > {{.STATE}}.tmp 2>/dev/null || true
-        echo "DOG_ID=$ID" >> {{.STATE}}.tmp
-        mv {{.STATE}}.tmp {{.STATE}}
-
-  dogs:list:
-    desc: List all dogs for an owner
-    vars:
-      WALKER_TOKEN:
-        sh: grep '^WALKER_TOKEN=' {{.STATE}} 2>/dev/null | cut -d= -f2-
-      OWNER_ID:
-        sh: grep '^OWNER_ID=' {{.STATE}} 2>/dev/null | cut -d= -f2-
-    cmds:
-      - |
-        curl -s {{.BASE_URL}}/owners/{{.OWNER_ID}}/dogs \
-          -H "Authorization: Bearer {{.WALKER_TOKEN}}" | jq .
-
-  dogs:get:
-    desc: Get a single dog
-    vars:
-      WALKER_TOKEN:
-        sh: grep '^WALKER_TOKEN=' {{.STATE}} 2>/dev/null | cut -d= -f2-
-      OWNER_ID:
-        sh: grep '^OWNER_ID=' {{.STATE}} 2>/dev/null | cut -d= -f2-
-      DOG_ID:
-        sh: grep '^DOG_ID=' {{.STATE}} 2>/dev/null | cut -d= -f2-
-    cmds:
-      - |
-        curl -s {{.BASE_URL}}/owners/{{.OWNER_ID}}/dogs/{{.DOG_ID}} \
-          -H "Authorization: Bearer {{.WALKER_TOKEN}}" | jq .
-
-  # ---------------------------------------------------------------------------
-  # 6. WALK REQUESTS
-  # ---------------------------------------------------------------------------
-
-  walk-requests:create:
-    desc: Create a walk request (saves WALK_REQUEST_ID)
-    vars:
-      WALKER_TOKEN:
-        sh: grep '^WALKER_TOKEN=' {{.STATE}} 2>/dev/null | cut -d= -f2-
-      OWNER_ID:
-        sh: grep '^OWNER_ID=' {{.STATE}} 2>/dev/null | cut -d= -f2-
-      DOG_ID:
-        sh: grep '^DOG_ID=' {{.STATE}} 2>/dev/null | cut -d= -f2-
-    cmds:
-      - |
-        RESPONSE=$(curl -s -X POST {{.BASE_URL}}/walk-requests \
-          -H "Authorization: Bearer {{.WALKER_TOKEN}}" \
-          -H "Content-Type: application/json" \
-          -d "{
-            \"ownerId\": \"{{.OWNER_ID}}\",
-            \"dogIds\": [\"{{.DOG_ID}}\"],
-            \"requestedDate\": \"2026-05-01\",
-            \"requestedStartTime\": \"09:00:00Z\",
-            \"durationMinutes\": 60,
-            \"walkType\": \"solo_walk\",
-            \"notes\": \"Buddy needs his morning walk.\"
-          }")
-        echo "$RESPONSE" | jq .
-        ID=$(echo "$RESPONSE" | jq -r '.id')
-        grep -v "^WALK_REQUEST_ID=" {{.STATE}} > {{.STATE}}.tmp 2>/dev/null || true
-        echo "WALK_REQUEST_ID=$ID" >> {{.STATE}}.tmp
-        mv {{.STATE}}.tmp {{.STATE}}
-
-  walk-requests:list:
-    desc: List all walk requests
-    vars:
-      WALKER_TOKEN:
-        sh: grep '^WALKER_TOKEN=' {{.STATE}} 2>/dev/null | cut -d= -f2-
-    cmds:
-      - |
-        curl -s {{.BASE_URL}}/walk-requests \
-          -H "Authorization: Bearer {{.WALKER_TOKEN}}" | jq .
-
-  walk-requests:get:
-    desc: Get a single walk request
-    vars:
-      WALKER_TOKEN:
-        sh: grep '^WALKER_TOKEN=' {{.STATE}} 2>/dev/null | cut -d= -f2-
-      WALK_REQUEST_ID:
-        sh: grep '^WALK_REQUEST_ID=' {{.STATE}} 2>/dev/null | cut -d= -f2-
-    cmds:
-      - |
-        curl -s {{.BASE_URL}}/walk-requests/{{.WALK_REQUEST_ID}} \
-          -H "Authorization: Bearer {{.WALKER_TOKEN}}" | jq .
-
-  walk-requests:accept:
-    desc: Accept a walk request — creates a Walk (saves WALK_ID)
-    vars:
-      WALKER_TOKEN:
-        sh: grep '^WALKER_TOKEN=' {{.STATE}} 2>/dev/null | cut -d= -f2-
-      WALK_REQUEST_ID:
-        sh: grep '^WALK_REQUEST_ID=' {{.STATE}} 2>/dev/null | cut -d= -f2-
-      WALKER_ID:
-        sh: grep '^WALKER_ID=' {{.STATE}} 2>/dev/null | cut -d= -f2-
-    cmds:
-      - |
-        RESPONSE=$(curl -s -X POST {{.BASE_URL}}/walk-requests/{{.WALK_REQUEST_ID}}/accept \
-          -H "Authorization: Bearer {{.WALKER_TOKEN}}" \
-          -H "Content-Type: application/json" \
-          -d "{
-            \"walkerId\": \"{{.WALKER_ID}}\",
-            \"confirmedDate\": \"2026-05-01\",
-            \"confirmedStartTime\": \"09:00:00Z\",
-            \"notes\": \"Will pick up from the front door.\"
-          }")
-        echo "$RESPONSE" | jq .
-        ID=$(echo "$RESPONSE" | jq -r '.id')
-        grep -v "^WALK_ID=" {{.STATE}} > {{.STATE}}.tmp 2>/dev/null || true
-        echo "WALK_ID=$ID" >> {{.STATE}}.tmp
-        mv {{.STATE}}.tmp {{.STATE}}
-
-  walk-requests:update:
-    desc: Update a walk request
-    vars:
-      WALKER_TOKEN:
-        sh: grep '^WALKER_TOKEN=' {{.STATE}} 2>/dev/null | cut -d= -f2-
-      WALK_REQUEST_ID:
-        sh: grep '^WALK_REQUEST_ID=' {{.STATE}} 2>/dev/null | cut -d= -f2-
-      OWNER_ID:
-        sh: grep '^OWNER_ID=' {{.STATE}} 2>/dev/null | cut -d= -f2-
-      DOG_ID:
-        sh: grep '^DOG_ID=' {{.STATE}} 2>/dev/null | cut -d= -f2-
-    cmds:
-      - |
-        curl -s -X PUT {{.BASE_URL}}/walk-requests/{{.WALK_REQUEST_ID}} \
-          -H "Authorization: Bearer {{.WALKER_TOKEN}}" \
-          -H "Content-Type: application/json" \
-          -d "{
-            \"ownerId\": \"{{.OWNER_ID}}\",
-            \"dogIds\": [\"{{.DOG_ID}}\"],
-            \"requestedDate\": \"2026-05-02\",
-            \"requestedStartTime\": \"10:00:00Z\",
-            \"durationMinutes\": 60,
-            \"walkType\": \"solo_walk\"
-          }" | jq .
-
-  walk-requests:decline:
-    desc: Decline a walk request
-    vars:
-      WALKER_TOKEN:
-        sh: grep '^WALKER_TOKEN=' {{.STATE}} 2>/dev/null | cut -d= -f2-
-      WALK_REQUEST_ID:
-        sh: grep '^WALK_REQUEST_ID=' {{.STATE}} 2>/dev/null | cut -d= -f2-
-    cmds:
-      - |
-        curl -s -X POST {{.BASE_URL}}/walk-requests/{{.WALK_REQUEST_ID}}/decline \
-          -H "Authorization: Bearer {{.WALKER_TOKEN}}" \
-          -H "Content-Type: application/json" \
-          -d '{"declineReason": "Fully booked that day."}' | jq .
-
-  # ---------------------------------------------------------------------------
-  # 7. WALKS
-  # ---------------------------------------------------------------------------
-
-  walks:list:
-    desc: List all walks
-    vars:
-      WALKER_TOKEN:
-        sh: grep '^WALKER_TOKEN=' {{.STATE}} 2>/dev/null | cut -d= -f2-
-    cmds:
-      - |
-        curl -s {{.BASE_URL}}/walks \
-          -H "Authorization: Bearer {{.WALKER_TOKEN}}" | jq .
-
-  walks:get:
-    desc: Get a single walk
-    vars:
-      WALKER_TOKEN:
-        sh: grep '^WALKER_TOKEN=' {{.STATE}} 2>/dev/null | cut -d= -f2-
-      WALK_ID:
-        sh: grep '^WALK_ID=' {{.STATE}} 2>/dev/null | cut -d= -f2-
-    cmds:
-      - |
-        curl -s {{.BASE_URL}}/walks/{{.WALK_ID}} \
-          -H "Authorization: Bearer {{.WALKER_TOKEN}}" | jq .
-
-  walks:update:
-    desc: Update a walk
-    vars:
-      WALKER_TOKEN:
-        sh: grep '^WALKER_TOKEN=' {{.STATE}} 2>/dev/null | cut -d= -f2-
-      WALK_ID:
-        sh: grep '^WALK_ID=' {{.STATE}} 2>/dev/null | cut -d= -f2-
-    cmds:
-      - |
-        curl -s -X PUT {{.BASE_URL}}/walks/{{.WALK_ID}} \
-          -H "Authorization: Bearer {{.WALKER_TOKEN}}" \
-          -H "Content-Type: application/json" \
-          -d '{
-            "scheduledDate": "2026-05-01",
-            "scheduledStartTime": "09:30:00Z",
-            "durationMinutes": 60,
-            "routeNotes": "Use the river path today."
-          }' | jq .
-
-  walks:start:
-    desc: Start a walk
-    vars:
-      WALKER_TOKEN:
-        sh: grep '^WALKER_TOKEN=' {{.STATE}} 2>/dev/null | cut -d= -f2-
-      WALK_ID:
-        sh: grep '^WALK_ID=' {{.STATE}} 2>/dev/null | cut -d= -f2-
-    cmds:
-      - |
-        curl -s -X POST {{.BASE_URL}}/walks/{{.WALK_ID}}/start \
-          -H "Authorization: Bearer {{.WALKER_TOKEN}}" \
-          -H "Content-Type: application/json" \
-          -d '{"actualStartTime": "2026-05-01T09:05:00Z"}' | jq .
-
-  walks:update:post:
-    desc: Post a walk update / note
-    vars:
-      WALKER_TOKEN:
-        sh: grep '^WALKER_TOKEN=' {{.STATE}} 2>/dev/null | cut -d= -f2-
-      WALK_ID:
-        sh: grep '^WALK_ID=' {{.STATE}} 2>/dev/null | cut -d= -f2-
-    cmds:
-      - |
-        curl -s -X POST {{.BASE_URL}}/walks/{{.WALK_ID}}/updates \
-          -H "Authorization: Bearer {{.WALKER_TOKEN}}" \
-          -F "type=note" \
-          -F "note=Buddy is doing great — just passing Bute Park!" | jq .
-
-  walks:updates:list:
-    desc: List all updates for a walk
-    vars:
-      WALKER_TOKEN:
-        sh: grep '^WALKER_TOKEN=' {{.STATE}} 2>/dev/null | cut -d= -f2-
-      WALK_ID:
-        sh: grep '^WALK_ID=' {{.STATE}} 2>/dev/null | cut -d= -f2-
-    cmds:
-      - |
-        curl -s {{.BASE_URL}}/walks/{{.WALK_ID}}/updates \
-          -H "Authorization: Bearer {{.WALKER_TOKEN}}" | jq .
-
-  walks:complete:
-    desc: Complete a walk
-    vars:
-      WALKER_TOKEN:
-        sh: grep '^WALKER_TOKEN=' {{.STATE}} 2>/dev/null | cut -d= -f2-
-      WALK_ID:
-        sh: grep '^WALK_ID=' {{.STATE}} 2>/dev/null | cut -d= -f2-
-    cmds:
-      - |
-        curl -s -X POST {{.BASE_URL}}/walks/{{.WALK_ID}}/complete \
-          -H "Authorization: Bearer {{.WALKER_TOKEN}}" \
-          -H "Content-Type: application/json" \
-          -d '{
-            "actualStartTime": "2026-05-01T09:05:00Z",
-            "actualEndTime": "2026-05-01T10:10:00Z",
-            "distanceKm": 4.2,
-            "summaryNotes": "Great walk — Buddy was very energetic today!"
-          }' | jq .
-
-  walks:cancel:
-    desc: Cancel a walk
-    vars:
-      WALKER_TOKEN:
-        sh: grep '^WALKER_TOKEN=' {{.STATE}} 2>/dev/null | cut -d= -f2-
-      WALK_ID:
-        sh: grep '^WALK_ID=' {{.STATE}} 2>/dev/null | cut -d= -f2-
-    cmds:
-      - |
-        curl -s -X POST {{.BASE_URL}}/walks/{{.WALK_ID}}/cancel \
-          -H "Authorization: Bearer {{.WALKER_TOKEN}}" \
-          -H "Content-Type: application/json" \
-          -d '{"cancelReason": "Owner requested cancellation."}' | jq .
-
-  # ---------------------------------------------------------------------------
-  # 8. RECURRING WALKS
-  # ---------------------------------------------------------------------------
-
-  recurring-walks:create:
-    desc: Create a recurring walk (saves RECURRING_WALK_ID)
-    vars:
-      WALKER_TOKEN:
-        sh: grep '^WALKER_TOKEN=' {{.STATE}} 2>/dev/null | cut -d= -f2-
-      OWNER_ID:
-        sh: grep '^OWNER_ID=' {{.STATE}} 2>/dev/null | cut -d= -f2-
-      DOG_ID:
-        sh: grep '^DOG_ID=' {{.STATE}} 2>/dev/null | cut -d= -f2-
-    cmds:
-      - |
-        RESPONSE=$(curl -s -X POST {{.BASE_URL}}/recurring-walks \
-          -H "Authorization: Bearer {{.WALKER_TOKEN}}" \
-          -H "Content-Type: application/json" \
-          -d "{
-            \"ownerId\": \"{{.OWNER_ID}}\",
-            \"dogIds\": [\"{{.DOG_ID}}\"],
-            \"walkType\": \"solo_walk\",
-            \"durationMinutes\": 60,
-            \"recurrence\": {
-              \"frequency\": \"weekly\",
-              \"dayOfWeek\": \"monday\",
-              \"startTime\": \"09:00:00Z\"
-            },
-            \"startDate\": \"2026-05-05\"
-          }")
-        echo "$RESPONSE" | jq .
-        ID=$(echo "$RESPONSE" | jq -r '.id')
-        grep -v "^RECURRING_WALK_ID=" {{.STATE}} > {{.STATE}}.tmp 2>/dev/null || true
-        echo "RECURRING_WALK_ID=$ID" >> {{.STATE}}.tmp
-        mv {{.STATE}}.tmp {{.STATE}}
-
-  recurring-walks:list:
-    desc: List all recurring walks
-    vars:
-      WALKER_TOKEN:
-        sh: grep '^WALKER_TOKEN=' {{.STATE}} 2>/dev/null | cut -d= -f2-
-    cmds:
-      - |
-        curl -s {{.BASE_URL}}/recurring-walks \
-          -H "Authorization: Bearer {{.WALKER_TOKEN}}" | jq .
-
-  recurring-walks:get:
-    desc: Get a single recurring walk
-    vars:
-      WALKER_TOKEN:
-        sh: grep '^WALKER_TOKEN=' {{.STATE}} 2>/dev/null | cut -d= -f2-
-      RECURRING_WALK_ID:
-        sh: grep '^RECURRING_WALK_ID=' {{.STATE}} 2>/dev/null | cut -d= -f2-
-    cmds:
-      - |
-        curl -s {{.BASE_URL}}/recurring-walks/{{.RECURRING_WALK_ID}} \
-          -H "Authorization: Bearer {{.WALKER_TOKEN}}" | jq .
-
-  recurring-walks:pause:
-    desc: Pause a recurring walk
-    vars:
-      WALKER_TOKEN:
-        sh: grep '^WALKER_TOKEN=' {{.STATE}} 2>/dev/null | cut -d= -f2-
-      RECURRING_WALK_ID:
-        sh: grep '^RECURRING_WALK_ID=' {{.STATE}} 2>/dev/null | cut -d= -f2-
-    cmds:
-      - |
-        curl -s -X POST {{.BASE_URL}}/recurring-walks/{{.RECURRING_WALK_ID}}/pause \
-          -H "Authorization: Bearer {{.WALKER_TOKEN}}" \
-          -H "Content-Type: application/json" \
-          -d '{}' | jq .
-
-  recurring-walks:resume:
-    desc: Resume a recurring walk
-    vars:
-      WALKER_TOKEN:
-        sh: grep '^WALKER_TOKEN=' {{.STATE}} 2>/dev/null | cut -d= -f2-
-      RECURRING_WALK_ID:
-        sh: grep '^RECURRING_WALK_ID=' {{.STATE}} 2>/dev/null | cut -d= -f2-
-    cmds:
-      - |
-        curl -s -X POST {{.BASE_URL}}/recurring-walks/{{.RECURRING_WALK_ID}}/resume \
-          -H "Authorization: Bearer {{.WALKER_TOKEN}}" \
-          -H "Content-Type: application/json" \
-          -d '{}' | jq .
-
-  recurring-walks:update:
-    desc: Update a recurring walk
-    vars:
-      WALKER_TOKEN:
-        sh: grep '^WALKER_TOKEN=' {{.STATE}} 2>/dev/null | cut -d= -f2-
-      RECURRING_WALK_ID:
-        sh: grep '^RECURRING_WALK_ID=' {{.STATE}} 2>/dev/null | cut -d= -f2-
-    cmds:
-      - |
-        curl -s -X PUT {{.BASE_URL}}/recurring-walks/{{.RECURRING_WALK_ID}} \
-          -H "Authorization: Bearer {{.WALKER_TOKEN}}" \
-          -H "Content-Type: application/json" \
-          -d '{"durationMinutes": 90}' | jq .
-
-  # ---------------------------------------------------------------------------
-  # 9. INVOICES
-  # ---------------------------------------------------------------------------
-
-  invoices:create:
-    desc: Create an invoice (saves INVOICE_ID)
-    vars:
-      WALKER_TOKEN:
-        sh: grep '^WALKER_TOKEN=' {{.STATE}} 2>/dev/null | cut -d= -f2-
-      OWNER_ID:
-        sh: grep '^OWNER_ID=' {{.STATE}} 2>/dev/null | cut -d= -f2-
-      WALKER_ID:
-        sh: grep '^WALKER_ID=' {{.STATE}} 2>/dev/null | cut -d= -f2-
-      WALK_ID:
-        sh: grep '^WALK_ID=' {{.STATE}} 2>/dev/null | cut -d= -f2-
-    cmds:
-      - |
-        RESPONSE=$(curl -s -X POST {{.BASE_URL}}/invoices \
-          -H "Authorization: Bearer {{.WALKER_TOKEN}}" \
-          -H "Content-Type: application/json" \
-          -d "{
-            \"ownerId\": \"{{.OWNER_ID}}\",
-            \"walkerId\": \"{{.WALKER_ID}}\",
-            \"lineItems\": [
-              {
-                \"walkId\": \"{{.WALK_ID}}\",
-                \"description\": \"Solo walk 60min — 2026-05-01\",
-                \"quantity\": 1,
-                \"unitPrice\": 15.00
-              }
-            ],
-            \"dueDate\": \"2026-05-15\"
-          }")
-        echo "$RESPONSE" | jq .
-        ID=$(echo "$RESPONSE" | jq -r '.id')
-        grep -v "^INVOICE_ID=" {{.STATE}} > {{.STATE}}.tmp 2>/dev/null || true
-        echo "INVOICE_ID=$ID" >> {{.STATE}}.tmp
-        mv {{.STATE}}.tmp {{.STATE}}
-
-  invoices:list:
-    desc: List all invoices
-    vars:
-      WALKER_TOKEN:
-        sh: grep '^WALKER_TOKEN=' {{.STATE}} 2>/dev/null | cut -d= -f2-
-    cmds:
-      - |
-        curl -s {{.BASE_URL}}/invoices \
-          -H "Authorization: Bearer {{.WALKER_TOKEN}}" | jq .
-
-  invoices:get:
-    desc: Get a single invoice
-    vars:
-      WALKER_TOKEN:
-        sh: grep '^WALKER_TOKEN=' {{.STATE}} 2>/dev/null | cut -d= -f2-
-      INVOICE_ID:
-        sh: grep '^INVOICE_ID=' {{.STATE}} 2>/dev/null | cut -d= -f2-
-    cmds:
-      - |
-        curl -s {{.BASE_URL}}/invoices/{{.INVOICE_ID}} \
-          -H "Authorization: Bearer {{.WALKER_TOKEN}}" | jq .
-
-  invoices:update:
-    desc: Update an invoice
-    vars:
-      WALKER_TOKEN:
-        sh: grep '^WALKER_TOKEN=' {{.STATE}} 2>/dev/null | cut -d= -f2-
-      INVOICE_ID:
-        sh: grep '^INVOICE_ID=' {{.STATE}} 2>/dev/null | cut -d= -f2-
-    cmds:
-      - |
-        curl -s -X PUT {{.BASE_URL}}/invoices/{{.INVOICE_ID}} \
-          -H "Authorization: Bearer {{.WALKER_TOKEN}}" \
-          -H "Content-Type: application/json" \
-          -d '{
-            "dueDate": "2026-05-20",
-            "notes": "Updated: please pay by bank transfer."
-          }' | jq .
-
-  invoices:send:
-    desc: Send an invoice to the owner
-    vars:
-      WALKER_TOKEN:
-        sh: grep '^WALKER_TOKEN=' {{.STATE}} 2>/dev/null | cut -d= -f2-
-      INVOICE_ID:
-        sh: grep '^INVOICE_ID=' {{.STATE}} 2>/dev/null | cut -d= -f2-
-    cmds:
-      - |
-        curl -s -X POST {{.BASE_URL}}/invoices/{{.INVOICE_ID}}/send \
-          -H "Authorization: Bearer {{.WALKER_TOKEN}}" \
-          -H "Content-Type: application/json" \
-          -d '{}' | jq .
-
-  invoices:mark-paid:
-    desc: Mark an invoice as paid
-    vars:
-      WALKER_TOKEN:
-        sh: grep '^WALKER_TOKEN=' {{.STATE}} 2>/dev/null | cut -d= -f2-
-      INVOICE_ID:
-        sh: grep '^INVOICE_ID=' {{.STATE}} 2>/dev/null | cut -d= -f2-
-    cmds:
-      - |
-        curl -s -X POST {{.BASE_URL}}/invoices/{{.INVOICE_ID}}/pay \
-          -H "Authorization: Bearer {{.WALKER_TOKEN}}" \
-          -H "Content-Type: application/json" \
-          -d '{
-            "paymentMethod": "bank_transfer",
-            "paymentReference": "REF-2026-001",
-            "paidAt": "2026-05-10T14:00:00Z"
-          }' | jq .
-
-  # ---------------------------------------------------------------------------
-  # FULL DEMO WORKFLOW
-  # ---------------------------------------------------------------------------
-
-  server:start:
-    desc: Start the API server in the background and wait until it is ready
-    cmds:
-      - |
-        if curl -s --max-time 2 -o /dev/null http://localhost:3000/v1/auth/register 2>/dev/null; then
-          echo "API server already running."
-        else
-          echo "Starting API server..."
-          cd api && npm start &
-          SERVER_PID=$!
-          echo "SERVER_PID=$SERVER_PID" >> {{.STATE}}
-          for i in $(seq 1 20); do
-            sleep 1
-            if curl -s --max-time 2 -o /dev/null http://localhost:3000/v1/auth/register 2>/dev/null; then
-              echo "API server ready."
-              exit 0
-            fi
-          done
-          echo "ERROR: API server did not become ready in time." >&2
-          exit 1
-        fi
 
   demo:
-    desc: Start the API server and run the full walk lifecycle end-to-end
+    desc: Run the full end-to-end demo workflow
     cmds:
       - task: state:clear
-      - task: server:start
-      - task: auth:register:walker
-      - task: auth:register:owner
-      - task: interest:submit
-      - task: interest:accept
-      - task: owners:create
-      - task: walkers:create
-      - task: dogs:add
-      - task: walk-requests:create
-      - task: walk-requests:accept
-      - task: walks:start
-      - task: walks:update:post
-      - task: walks:complete
-      - task: invoices:create
-      - task: invoices:send
-      - task: invoices:mark-paid
-      - echo "Demo complete. State saved to {{.STATE}}"
+      - echo ""
+      - echo "=== 1. Register contributor and viewer ==="
+      - task: auth:register:contributor
+      - task: auth:register:viewer
+      - echo ""
+      - echo "=== 2. Contributor creates an item ==="
+      - task: items:create
+      - echo ""
+      - echo "=== 3. List items (contributor view) ==="
+      - task: items:list
+      - echo ""
+      - echo "=== 4. Viewer lists items (read-only) ==="
+      - task: items:list:viewer
+      - echo ""
+      - echo "=== 5. Viewer tries to create (expect 403) ==="
+      - task: items:create:viewer
+      - echo ""
+      - echo "=== 6. Get specific item ==="
+      - task: items:get
+      - echo ""
+      - echo "=== 7. Update item (archive it) ==="
+      - task: items:update
+      - echo ""
+      - echo "=== 8. Delete item ==="
+      - task: items:delete
+      - echo ""
+      - echo "=== Demo complete ==="

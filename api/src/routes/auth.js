@@ -25,30 +25,8 @@ router.post('/auth/register', async (req, res, next) => {
     const user = { id: userId, email, password: hashedPassword, firstName, lastName, role, createdAt: now };
     store.users.set(userId, user);
 
-    if (role === 'owner') {
-      const owner = {
-        id: uuidv4(),
-        userId,
-        firstName,
-        lastName,
-        email,
-        phone: '',
-        createdAt: now,
-        updatedAt: now,
-      };
-      store.owners.set(owner.id, owner);
-    } else if (role === 'walker') {
-      const walker = {
-        id: uuidv4(),
-        userId,
-        firstName,
-        lastName,
-        email,
-        phone: '',
-        createdAt: now,
-        updatedAt: now,
-      };
-      store.walkers.set(walker.id, walker);
+    if (role === 'contributor') {
+      // contributor profile could be extended here in a real domain
     }
 
     const payload = { sub: userId, email, role };

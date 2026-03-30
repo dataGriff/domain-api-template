@@ -1,253 +1,42 @@
 openapi: 3.0.3
 info:
-  title: Dog Walking Management API
+  title: Items API
   description: |
-    The Stardogwalker management API — Cardiff, South Wales.
+    Example domain API for the **Domain API Template**.
 
-    This API is designed **API-first** to support multiple interaction
-    channels: web app, native mobile app, conversational chat interfaces
-    (e.g. WhatsApp bot), and agentic AI applications. All business logic
-    lives here; no channel-specific logic is embedded in the API.
+    This is a deliberately simple "Items" domain included as a working reference
+    implementation. It demonstrates the full template pattern:
 
-    **Design principles:**
-    - Stateless — every request authenticates via JWT bearer token
-    - Fine-grained actions — discrete endpoints for each state transition
-      (e.g. `/accept`, `/decline`) to support unambiguous intent from any
-      client type including AI agents
-    - Consistent response envelopes — list responses always include
-      `data[]` and `pagination`; errors always return `code`, `message`,
-      and optional `details`
-    - Versioned — breaking changes will be introduced under `/v2` without
-      removing `/v1` until all clients have migrated
+    - JWT-based authentication with two roles (`contributor`, `viewer`)
+    - Role-based access control (RBAC)
+    - Ownership-scoped write operations
+    - Pagination on list endpoints
+    - Standard error response shapes
 
-    Covers: interest registration (public), authentication, dog owner and
-    walker management, dog profiles, walk requests, walk scheduling and
-    execution, real-time walk updates, and invoicing.
+    **Replace this spec** with your own domain's OpenAPI contract when using this template.
+    Run `task domain:init` to copy blank spec templates into `docs/specifications/`.
   version: 1.0.0
   contact:
-    name: Dog Walking API Support
-    email: support@dogwalking.example.com
-  license:
-    name: MIT
+    name: Domain API Template
+    email: template@example.com
 
 servers:
-  - url: http://localhost:3000/v1
+  - url: http://localhost:3000
     description: Local development server
-  - url: https://api.dogwalking.example.com/v1
-    description: Production server
-  - url: https://staging-api.dogwalking.example.com/v1
-    description: Staging server
-
-security:
-  - bearerAuth: []
 
 tags:
   - name: Auth
-    description: Authentication and authorisation
-  - name: Interest Requests
-    description: Public interest registration and walker backlog management
-  - name: Owners
-    description: Dog owner management
-  - name: Walkers
-    description: Dog walker management
-  - name: Dogs
-    description: Dog details management
-  - name: Walk Requests
-    description: Walk request management
-  - name: Walks
-    description: Walk scheduling and management
-  - name: Walk Updates
-    description: Walk updates including images and notes
-  - name: Recurring Walks
-    description: Recurring walk schedule management
-  - name: Invoices
-    description: Invoice management
+    description: Authentication — register, login, refresh tokens, and logout
+  - name: Items
+    description: Item management — create, list, view, update, and delete items
 
 paths:
-
-  # ---------------------------------------------------------------------------
-  # Interest Requests
-  # ---------------------------------------------------------------------------
-
-  /interest-requests:
-    get:
-      tags:
-        - Interest Requests
-      summary: List interest requests
-      description: |
-        Retrieve a paginated list of interest requests. Accessible by walkers only.
-      operationId: listInterestRequests
-      parameters:
-        - $ref: '#/components/parameters/PageParam'
-        - $ref: '#/components/parameters/PageSizeParam'
-        - name: status
-          in: query
-          description: Filter interest requests by status
-          schema:
-            $ref: '#/components/schemas/InterestRequestStatus'
-      responses:
-        '200':
-          description: A list of interest requests
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/InterestRequestList'
-        '401':
-          $ref: '#/components/responses/Unauthorised'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-
+  /v1/auth/register:
     post:
-      tags:
-        - Interest Requests
-      summary: Submit an interest request
-      description: |
-        A prospective client submits their details via the public marketing
-        site. No authentication is required.
-      operationId: createInterestRequest
-      security: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/InterestRequestCreate'
-      responses:
-        '201':
-          description: Interest request received
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/InterestRequestPublic'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '409':
-          $ref: '#/components/responses/Conflict'
-
-  /interest-requests/{interestRequestId}:
-    parameters:
-      - $ref: '#/components/parameters/InterestRequestId'
-    get:
-      tags:
-        - Interest Requests
-      summary: Get an interest request
-      description: Retrieve details of a specific interest request.
-      operationId: getInterestRequest
-      responses:
-        '200':
-          description: Interest request details
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/InterestRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorised'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-    put:
-      tags:
-        - Interest Requests
-      summary: Update an interest request
-      description: |
-        Allows the walker to add or update internal notes on an interest
-        request before making a decision.
-      operationId: updateInterestRequest
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/InterestRequestUpdate'
-      responses:
-        '200':
-          description: Interest request updated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/InterestRequest'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorised'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-  /interest-requests/{interestRequestId}/accept:
-    parameters:
-      - $ref: '#/components/parameters/InterestRequestId'
-    post:
-      tags:
-        - Interest Requests
-      summary: Accept an interest request
-      description: |
-        The walker accepts an interest request. The system automatically
-        creates an Owner profile and User account from the request data and
-        issues an invitation credential to the new client.
-      operationId: acceptInterestRequest
-      responses:
-        '200':
-          description: Interest request accepted; owner account created
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/InterestRequest'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorised'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '409':
-          $ref: '#/components/responses/Conflict'
-
-  /interest-requests/{interestRequestId}/decline:
-    parameters:
-      - $ref: '#/components/parameters/InterestRequestId'
-    post:
-      tags:
-        - Interest Requests
-      summary: Decline an interest request
-      description: The walker declines an interest request.
-      operationId: declineInterestRequest
-      requestBody:
-        required: false
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/InterestRequestDecline'
-      responses:
-        '200':
-          description: Interest request declined
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/InterestRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorised'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-  # ---------------------------------------------------------------------------
-  # Auth
-  # ---------------------------------------------------------------------------
-
-  /auth/register:
-    post:
-      tags:
-        - Auth
+      tags: [Auth]
       summary: Register a new user
-      description: Register a new dog owner or dog walker account.
+      description: Create a new user account with either `contributor` or `viewer` role. Returns access and refresh tokens on success.
       operationId: registerUser
-      security: []
       requestBody:
         required: true
         content:
@@ -262,18 +51,16 @@ paths:
               schema:
                 $ref: '#/components/schemas/AuthResponse'
         '400':
-          $ref: '#/components/responses/BadRequest'
+          $ref: '#/components/responses/ValidationError'
         '409':
-          $ref: '#/components/responses/Conflict'
+          $ref: '#/components/responses/ConflictError'
 
-  /auth/login:
+  /v1/auth/login:
     post:
-      tags:
-        - Auth
+      tags: [Auth]
       summary: Log in
-      description: Authenticate with email and password to receive an access token.
+      description: Authenticate with email and password. Returns access and refresh tokens.
       operationId: loginUser
-      security: []
       requestBody:
         required: true
         content:
@@ -288,31 +75,16 @@ paths:
               schema:
                 $ref: '#/components/schemas/AuthResponse'
         '400':
-          $ref: '#/components/responses/BadRequest'
+          $ref: '#/components/responses/ValidationError'
         '401':
-          $ref: '#/components/responses/Unauthorised'
+          $ref: '#/components/responses/AuthenticationError'
 
-  /auth/logout:
+  /v1/auth/refresh:
     post:
-      tags:
-        - Auth
-      summary: Log out
-      description: Invalidate the current access token.
-      operationId: logoutUser
-      responses:
-        '204':
-          description: Logged out successfully
-        '401':
-          $ref: '#/components/responses/Unauthorised'
-
-  /auth/refresh:
-    post:
-      tags:
-        - Auth
+      tags: [Auth]
       summary: Refresh access token
-      description: Exchange a refresh token for a new access token.
+      description: Exchange a refresh token for a new access token and refresh token pair.
       operationId: refreshToken
-      security: []
       requestBody:
         required: true
         content:
@@ -326,1300 +98,174 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AuthResponse'
-        '400':
-          $ref: '#/components/responses/BadRequest'
         '401':
-          $ref: '#/components/responses/Unauthorised'
+          $ref: '#/components/responses/AuthenticationError'
 
-  # ---------------------------------------------------------------------------
-  # Dog Owners
-  # ---------------------------------------------------------------------------
-
-  /owners:
-    get:
-      tags:
-        - Owners
-      summary: List dog owners
-      description: Retrieve a paginated list of dog owners. Accessible by walkers.
-      operationId: listOwners
-      parameters:
-        - $ref: '#/components/parameters/PageParam'
-        - $ref: '#/components/parameters/PageSizeParam'
-      responses:
-        '200':
-          description: A list of dog owners
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/OwnerList'
-        '401':
-          $ref: '#/components/responses/Unauthorised'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-
+  /v1/auth/logout:
     post:
-      tags:
-        - Owners
-      summary: Create a dog owner
-      description: Create a new dog owner profile.
-      operationId: createOwner
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/OwnerRequest'
-      responses:
-        '201':
-          description: Dog owner created
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Owner'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorised'
-
-  /owners/{ownerId}:
-    parameters:
-      - $ref: '#/components/parameters/OwnerId'
-    get:
-      tags:
-        - Owners
-      summary: Get a dog owner
-      description: Retrieve details of a specific dog owner.
-      operationId: getOwner
-      responses:
-        '200':
-          description: Dog owner details
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Owner'
-        '401':
-          $ref: '#/components/responses/Unauthorised'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-    put:
-      tags:
-        - Owners
-      summary: Update a dog owner
-      description: Update the profile of a specific dog owner.
-      operationId: updateOwner
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/OwnerRequest'
-      responses:
-        '200':
-          description: Dog owner updated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Owner'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorised'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-    delete:
-      tags:
-        - Owners
-      summary: Delete a dog owner
-      description: Delete a dog owner profile.
-      operationId: deleteOwner
+      tags: [Auth]
+      summary: Log out
+      description: Invalidate the current session. Requires a valid bearer token.
+      operationId: logoutUser
+      security:
+        - bearerAuth: []
       responses:
         '204':
-          description: Dog owner deleted
+          description: Logged out successfully
         '401':
-          $ref: '#/components/responses/Unauthorised'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
+          $ref: '#/components/responses/AuthenticationError'
 
-  # ---------------------------------------------------------------------------
-  # Dog Walkers
-  # ---------------------------------------------------------------------------
-
-  /walkers:
+  /v1/items:
     get:
-      tags:
-        - Walkers
-      summary: List dog walkers
-      description: Retrieve a paginated list of dog walkers.
-      operationId: listWalkers
+      tags: [Items]
+      summary: List items
+      description: Returns a paginated list of all items. Accessible by both `contributor` and `viewer` roles.
+      operationId: listItems
+      security:
+        - bearerAuth: []
       parameters:
-        - $ref: '#/components/parameters/PageParam'
-        - $ref: '#/components/parameters/PageSizeParam'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
       responses:
         '200':
-          description: A list of dog walkers
+          description: Paginated list of items
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/WalkerList'
+                $ref: '#/components/schemas/ItemList'
         '401':
-          $ref: '#/components/responses/Unauthorised'
+          $ref: '#/components/responses/AuthenticationError'
 
     post:
-      tags:
-        - Walkers
-      summary: Create a dog walker
-      description: Create a new dog walker profile.
-      operationId: createWalker
+      tags: [Items]
+      summary: Create an item
+      description: Create a new item. Only `contributor` role may create items. The item is associated with the authenticated contributor.
+      operationId: createItem
+      security:
+        - bearerAuth: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/WalkerRequest'
+              $ref: '#/components/schemas/CreateItemRequest'
       responses:
         '201':
-          description: Dog walker created
+          description: Item created successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Walker'
+                $ref: '#/components/schemas/Item'
         '400':
-          $ref: '#/components/responses/BadRequest'
+          $ref: '#/components/responses/ValidationError'
         '401':
-          $ref: '#/components/responses/Unauthorised'
+          $ref: '#/components/responses/AuthenticationError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
 
-  /walkers/{walkerId}:
-    parameters:
-      - $ref: '#/components/parameters/WalkerId'
+  /v1/items/{itemId}:
     get:
-      tags:
-        - Walkers
-      summary: Get a dog walker
-      description: Retrieve details of a specific dog walker.
-      operationId: getWalker
+      tags: [Items]
+      summary: Get an item
+      description: Retrieve a single item by its ID. Accessible by both `contributor` and `viewer` roles.
+      operationId: getItem
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ItemId'
       responses:
         '200':
-          description: Dog walker details
+          description: Item found
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Walker'
+                $ref: '#/components/schemas/Item'
         '401':
-          $ref: '#/components/responses/Unauthorised'
+          $ref: '#/components/responses/AuthenticationError'
         '404':
-          $ref: '#/components/responses/NotFound'
+          $ref: '#/components/responses/NotFoundError'
 
-    put:
-      tags:
-        - Walkers
-      summary: Update a dog walker
-      description: Update the profile of a specific dog walker.
-      operationId: updateWalker
+    patch:
+      tags: [Items]
+      summary: Update an item
+      description: Partially update an item. Only the `contributor` who created the item may update it.
+      operationId: updateItem
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ItemId'
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/WalkerRequest'
+              $ref: '#/components/schemas/UpdateItemRequest'
       responses:
         '200':
-          description: Dog walker updated
+          description: Item updated successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Walker'
+                $ref: '#/components/schemas/Item'
         '400':
-          $ref: '#/components/responses/BadRequest'
+          $ref: '#/components/responses/ValidationError'
         '401':
-          $ref: '#/components/responses/Unauthorised'
+          $ref: '#/components/responses/AuthenticationError'
         '403':
-          $ref: '#/components/responses/Forbidden'
+          $ref: '#/components/responses/ForbiddenError'
         '404':
-          $ref: '#/components/responses/NotFound'
+          $ref: '#/components/responses/NotFoundError'
 
     delete:
-      tags:
-        - Walkers
-      summary: Delete a dog walker
-      description: Delete a dog walker profile.
-      operationId: deleteWalker
+      tags: [Items]
+      summary: Delete an item
+      description: Delete an item. Only the `contributor` who created the item may delete it.
+      operationId: deleteItem
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ItemId'
       responses:
         '204':
-          description: Dog walker deleted
+          description: Item deleted successfully
         '401':
-          $ref: '#/components/responses/Unauthorised'
+          $ref: '#/components/responses/AuthenticationError'
         '403':
-          $ref: '#/components/responses/Forbidden'
+          $ref: '#/components/responses/ForbiddenError'
         '404':
-          $ref: '#/components/responses/NotFound'
-
-  # ---------------------------------------------------------------------------
-  # Dogs
-  # ---------------------------------------------------------------------------
-
-  /owners/{ownerId}/dogs:
-    parameters:
-      - $ref: '#/components/parameters/OwnerId'
-    get:
-      tags:
-        - Dogs
-      summary: List dogs for an owner
-      description: Retrieve all dogs belonging to a specific owner.
-      operationId: listDogs
-      parameters:
-        - $ref: '#/components/parameters/PageParam'
-        - $ref: '#/components/parameters/PageSizeParam'
-      responses:
-        '200':
-          description: A list of dogs
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/DogList'
-        '401':
-          $ref: '#/components/responses/Unauthorised'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-    post:
-      tags:
-        - Dogs
-      summary: Add a dog to an owner
-      description: Create a new dog record associated with a specific owner.
-      operationId: createDog
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/DogRequest'
-      responses:
-        '201':
-          description: Dog created
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Dog'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorised'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-  /owners/{ownerId}/dogs/{dogId}:
-    parameters:
-      - $ref: '#/components/parameters/OwnerId'
-      - $ref: '#/components/parameters/DogId'
-    get:
-      tags:
-        - Dogs
-      summary: Get a dog
-      description: Retrieve details of a specific dog.
-      operationId: getDog
-      responses:
-        '200':
-          description: Dog details
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Dog'
-        '401':
-          $ref: '#/components/responses/Unauthorised'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-    put:
-      tags:
-        - Dogs
-      summary: Update a dog
-      description: Update the details of a specific dog.
-      operationId: updateDog
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/DogRequest'
-      responses:
-        '200':
-          description: Dog updated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Dog'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorised'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-    delete:
-      tags:
-        - Dogs
-      summary: Delete a dog
-      description: Remove a dog record from an owner.
-      operationId: deleteDog
-      responses:
-        '204':
-          description: Dog deleted
-        '401':
-          $ref: '#/components/responses/Unauthorised'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-  # ---------------------------------------------------------------------------
-  # Walk Requests
-  # ---------------------------------------------------------------------------
-
-  /walk-requests:
-    get:
-      tags:
-        - Walk Requests
-      summary: List walk requests
-      description: |
-        Retrieve a paginated list of walk requests. Dog owners see their own
-        requests; dog walkers see requests assigned to them or available requests.
-      operationId: listWalkRequests
-      parameters:
-        - $ref: '#/components/parameters/PageParam'
-        - $ref: '#/components/parameters/PageSizeParam'
-        - name: status
-          in: query
-          description: Filter requests by status
-          schema:
-            $ref: '#/components/schemas/WalkRequestStatus'
-      responses:
-        '200':
-          description: A list of walk requests
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/WalkRequestList'
-        '401':
-          $ref: '#/components/responses/Unauthorised'
-
-    post:
-      tags:
-        - Walk Requests
-      summary: Create a walk request
-      description: A dog owner submits a new walk request.
-      operationId: createWalkRequest
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/WalkRequestCreate'
-      responses:
-        '201':
-          description: Walk request created
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/WalkRequest'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorised'
-
-  /walk-requests/{requestId}:
-    parameters:
-      - $ref: '#/components/parameters/RequestId'
-    get:
-      tags:
-        - Walk Requests
-      summary: Get a walk request
-      description: Retrieve details of a specific walk request.
-      operationId: getWalkRequest
-      responses:
-        '200':
-          description: Walk request details
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/WalkRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorised'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-    put:
-      tags:
-        - Walk Requests
-      summary: Update a walk request
-      description: Update a pending walk request (e.g. change date/time or dogs).
-      operationId: updateWalkRequest
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/WalkRequestCreate'
-      responses:
-        '200':
-          description: Walk request updated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/WalkRequest'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorised'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-    delete:
-      tags:
-        - Walk Requests
-      summary: Cancel a walk request
-      description: Cancel and remove a walk request.
-      operationId: cancelWalkRequest
-      responses:
-        '204':
-          description: Walk request cancelled
-        '401':
-          $ref: '#/components/responses/Unauthorised'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-  /walk-requests/{requestId}/accept:
-    parameters:
-      - $ref: '#/components/parameters/RequestId'
-    post:
-      tags:
-        - Walk Requests
-      summary: Accept a walk request
-      description: A dog walker accepts a walk request, creating a scheduled walk.
-      operationId: acceptWalkRequest
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/WalkRequestAccept'
-      responses:
-        '200':
-          description: Walk request accepted and walk scheduled
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Walk'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorised'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '409':
-          $ref: '#/components/responses/Conflict'
-
-  /walk-requests/{requestId}/decline:
-    parameters:
-      - $ref: '#/components/parameters/RequestId'
-    post:
-      tags:
-        - Walk Requests
-      summary: Decline a walk request
-      description: A dog walker declines a walk request.
-      operationId: declineWalkRequest
-      requestBody:
-        required: false
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/WalkRequestDecline'
-      responses:
-        '200':
-          description: Walk request declined
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/WalkRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorised'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-  # ---------------------------------------------------------------------------
-  # Walks
-  # ---------------------------------------------------------------------------
-
-  /walks:
-    get:
-      tags:
-        - Walks
-      summary: List walks
-      description: |
-        Retrieve a paginated list of scheduled or completed walks. Dog owners
-        see walks for their dogs; walkers see their assigned walks.
-      operationId: listWalks
-      parameters:
-        - $ref: '#/components/parameters/PageParam'
-        - $ref: '#/components/parameters/PageSizeParam'
-        - name: status
-          in: query
-          description: Filter walks by status
-          schema:
-            $ref: '#/components/schemas/WalkStatus'
-        - name: date
-          in: query
-          description: Filter walks by date (YYYY-MM-DD)
-          schema:
-            type: string
-            format: date
-      responses:
-        '200':
-          description: A list of walks
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/WalkList'
-        '401':
-          $ref: '#/components/responses/Unauthorised'
-
-  /walks/{walkId}:
-    parameters:
-      - $ref: '#/components/parameters/WalkId'
-    get:
-      tags:
-        - Walks
-      summary: Get a walk
-      description: Retrieve details of a specific walk.
-      operationId: getWalk
-      responses:
-        '200':
-          description: Walk details
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Walk'
-        '401':
-          $ref: '#/components/responses/Unauthorised'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-    put:
-      tags:
-        - Walks
-      summary: Update a walk
-      description: Update details of a scheduled walk (e.g. start time, route notes).
-      operationId: updateWalk
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/WalkEdit'
-      responses:
-        '200':
-          description: Walk updated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Walk'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorised'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-  /walks/{walkId}/start:
-    parameters:
-      - $ref: '#/components/parameters/WalkId'
-    post:
-      tags:
-        - Walks
-      summary: Start a walk
-      description: Mark a scheduled walk as started, transitioning it to `in_progress`.
-      operationId: startWalk
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/WalkStart'
-      responses:
-        '200':
-          description: Walk started
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Walk'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorised'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-  /walks/{walkId}/complete:
-    parameters:
-      - $ref: '#/components/parameters/WalkId'
-    post:
-      tags:
-        - Walks
-      summary: Complete a walk
-      description: Mark a walk as completed.
-      operationId: completeWalk
-      requestBody:
-        required: false
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/WalkComplete'
-      responses:
-        '200':
-          description: Walk marked as completed
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Walk'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorised'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-  /walks/{walkId}/cancel:
-    parameters:
-      - $ref: '#/components/parameters/WalkId'
-    post:
-      tags:
-        - Walks
-      summary: Cancel a walk
-      description: Cancel a scheduled walk.
-      operationId: cancelWalk
-      requestBody:
-        required: false
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/WalkCancel'
-      responses:
-        '200':
-          description: Walk cancelled
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Walk'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorised'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-  # ---------------------------------------------------------------------------
-  # Walk Updates (images and notes)
-  # ---------------------------------------------------------------------------
-
-  /walks/{walkId}/updates:
-    parameters:
-      - $ref: '#/components/parameters/WalkId'
-    get:
-      tags:
-        - Walk Updates
-      summary: List walk updates
-      description: Retrieve all updates (notes and images) posted during a walk.
-      operationId: listWalkUpdates
-      parameters:
-        - $ref: '#/components/parameters/PageParam'
-        - $ref: '#/components/parameters/PageSizeParam'
-      responses:
-        '200':
-          description: A list of walk updates
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/WalkUpdateList'
-        '401':
-          $ref: '#/components/responses/Unauthorised'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-    post:
-      tags:
-        - Walk Updates
-      summary: Add a walk update
-      description: |
-        Post a new update for a walk. Supports text notes and image uploads
-        via multipart form data.
-      operationId: createWalkUpdate
-      requestBody:
-        required: true
-        content:
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/WalkUpdateCreate'
-      responses:
-        '201':
-          description: Walk update created
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/WalkUpdateItem'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorised'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-  /walks/{walkId}/updates/{updateId}:
-    parameters:
-      - $ref: '#/components/parameters/WalkId'
-      - $ref: '#/components/parameters/UpdateId'
-    get:
-      tags:
-        - Walk Updates
-      summary: Get a walk update
-      description: Retrieve a specific walk update.
-      operationId: getWalkUpdate
-      responses:
-        '200':
-          description: Walk update details
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/WalkUpdateItem'
-        '401':
-          $ref: '#/components/responses/Unauthorised'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-    delete:
-      tags:
-        - Walk Updates
-      summary: Delete a walk update
-      description: Remove a walk update.
-      operationId: deleteWalkUpdate
-      responses:
-        '204':
-          description: Walk update deleted
-        '401':
-          $ref: '#/components/responses/Unauthorised'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-  # ---------------------------------------------------------------------------
-  # Recurring Walks
-  # ---------------------------------------------------------------------------
-
-  /recurring-walks:
-    get:
-      tags:
-        - Recurring Walks
-      summary: List recurring walks
-      description: Retrieve all recurring walk schedules for the authenticated owner, or all schedules for the walker.
-      operationId: listRecurringWalks
-      parameters:
-        - $ref: '#/components/parameters/PageParam'
-        - $ref: '#/components/parameters/PageSizeParam'
-        - name: status
-          in: query
-          description: Filter by recurring walk status
-          schema:
-            $ref: '#/components/schemas/RecurringWalkStatus'
-      responses:
-        '200':
-          description: A list of recurring walks
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RecurringWalkList'
-        '401':
-          $ref: '#/components/responses/Unauthorised'
-
-    post:
-      tags:
-        - Recurring Walks
-      summary: Create a recurring walk
-      description: Set up a recurring walk schedule. Generates WalkRequests automatically on each occurrence.
-      operationId: createRecurringWalk
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/RecurringWalkCreate'
-      responses:
-        '201':
-          description: Recurring walk created
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RecurringWalk'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorised'
-
-  /recurring-walks/{recurringWalkId}:
-    parameters:
-      - $ref: '#/components/parameters/RecurringWalkId'
-    get:
-      tags:
-        - Recurring Walks
-      summary: Get a recurring walk
-      description: Retrieve details of a specific recurring walk schedule.
-      operationId: getRecurringWalk
-      responses:
-        '200':
-          description: Recurring walk details
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RecurringWalk'
-        '401':
-          $ref: '#/components/responses/Unauthorised'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-    put:
-      tags:
-        - Recurring Walks
-      summary: Update a recurring walk
-      description: Update the schedule details of an active recurring walk.
-      operationId: updateRecurringWalk
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/RecurringWalkUpdate'
-      responses:
-        '200':
-          description: Recurring walk updated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RecurringWalk'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorised'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-  /recurring-walks/{recurringWalkId}/pause:
-    parameters:
-      - $ref: '#/components/parameters/RecurringWalkId'
-    post:
-      tags:
-        - Recurring Walks
-      summary: Pause a recurring walk
-      description: Pause an active recurring walk. No new WalkRequests are generated while paused.
-      operationId: pauseRecurringWalk
-      responses:
-        '200':
-          description: Recurring walk paused
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RecurringWalk'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorised'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-  /recurring-walks/{recurringWalkId}/resume:
-    parameters:
-      - $ref: '#/components/parameters/RecurringWalkId'
-    post:
-      tags:
-        - Recurring Walks
-      summary: Resume a recurring walk
-      description: Resume a paused recurring walk. Request generation resumes from the next scheduled occurrence.
-      operationId: resumeRecurringWalk
-      responses:
-        '200':
-          description: Recurring walk resumed
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RecurringWalk'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorised'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-  /recurring-walks/{recurringWalkId}/cancel:
-    parameters:
-      - $ref: '#/components/parameters/RecurringWalkId'
-    post:
-      tags:
-        - Recurring Walks
-      summary: Cancel a recurring walk
-      description: Permanently cancel a recurring walk. Stops all future generation of WalkRequests. Any pending generated requests are cancelled automatically.
-      operationId: cancelRecurringWalk
-      responses:
-        '200':
-          description: Recurring walk cancelled
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RecurringWalk'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorised'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-  # ---------------------------------------------------------------------------
-  # Invoices
-  # ---------------------------------------------------------------------------
-
-  /invoices:
-    get:
-      tags:
-        - Invoices
-      summary: List invoices
-      description: |
-        Retrieve a paginated list of invoices. Dog owners see their own invoices;
-        walkers see invoices they have raised.
-      operationId: listInvoices
-      parameters:
-        - $ref: '#/components/parameters/PageParam'
-        - $ref: '#/components/parameters/PageSizeParam'
-        - name: status
-          in: query
-          description: Filter invoices by status
-          schema:
-            $ref: '#/components/schemas/InvoiceStatus'
-        - name: ownerId
-          in: query
-          description: Filter invoices by dog owner
-          schema:
-            type: string
-            format: uuid
-        - name: walkerId
-          in: query
-          description: Filter invoices by dog walker
-          schema:
-            type: string
-            format: uuid
-      responses:
-        '200':
-          description: A list of invoices
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/InvoiceList'
-        '401':
-          $ref: '#/components/responses/Unauthorised'
-
-    post:
-      tags:
-        - Invoices
-      summary: Create an invoice
-      description: A dog walker raises an invoice for one or more completed walks.
-      operationId: createInvoice
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/InvoiceRequest'
-      responses:
-        '201':
-          description: Invoice created
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Invoice'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorised'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-
-  /invoices/{invoiceId}:
-    parameters:
-      - $ref: '#/components/parameters/InvoiceId'
-    get:
-      tags:
-        - Invoices
-      summary: Get an invoice
-      description: Retrieve details of a specific invoice.
-      operationId: getInvoice
-      responses:
-        '200':
-          description: Invoice details
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Invoice'
-        '401':
-          $ref: '#/components/responses/Unauthorised'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-    put:
-      tags:
-        - Invoices
-      summary: Update an invoice
-      description: Update a draft invoice before it is sent.
-      operationId: updateInvoice
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/InvoiceUpdate'
-      responses:
-        '200':
-          description: Invoice updated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Invoice'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorised'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-  /invoices/{invoiceId}/send:
-    parameters:
-      - $ref: '#/components/parameters/InvoiceId'
-    post:
-      tags:
-        - Invoices
-      summary: Send an invoice
-      description: Transition a draft invoice to `sent`, making it visible to the owner.
-      operationId: sendInvoice
-      responses:
-        '200':
-          description: Invoice sent
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Invoice'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorised'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-  /invoices/{invoiceId}/pay:
-    parameters:
-      - $ref: '#/components/parameters/InvoiceId'
-    post:
-      tags:
-        - Invoices
-      summary: Mark an invoice as paid
-      description: Record payment against an invoice.
-      operationId: payInvoice
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/InvoicePayment'
-      responses:
-        '200':
-          description: Invoice marked as paid
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Invoice'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorised'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '409':
-          $ref: '#/components/responses/Conflict'
-
-# =============================================================================
-# Components
-# =============================================================================
+          $ref: '#/components/responses/NotFoundError'
 
 components:
-
   securitySchemes:
     bearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
 
-  # ---------------------------------------------------------------------------
-  # Parameters
-  # ---------------------------------------------------------------------------
-
   parameters:
-
-    InterestRequestId:
-      name: interestRequestId
+    ItemId:
+      name: itemId
       in: path
       required: true
-      description: Unique identifier of the interest request
+      description: Unique identifier of the item
       schema:
         type: string
         format: uuid
 
-    OwnerId:
-      name: ownerId
-      in: path
-      required: true
-      description: Unique identifier of the dog owner
-      schema:
-        type: string
-        format: uuid
-
-    WalkerId:
-      name: walkerId
-      in: path
-      required: true
-      description: Unique identifier of the dog walker
-      schema:
-        type: string
-        format: uuid
-
-    DogId:
-      name: dogId
-      in: path
-      required: true
-      description: Unique identifier of the dog
-      schema:
-        type: string
-        format: uuid
-
-    RequestId:
-      name: requestId
-      in: path
-      required: true
-      description: Unique identifier of the walk request
-      schema:
-        type: string
-        format: uuid
-
-    WalkId:
-      name: walkId
-      in: path
-      required: true
-      description: Unique identifier of the walk
-      schema:
-        type: string
-        format: uuid
-
-    UpdateId:
-      name: updateId
-      in: path
-      required: true
-      description: Unique identifier of the walk update
-      schema:
-        type: string
-        format: uuid
-
-    InvoiceId:
-      name: invoiceId
-      in: path
-      required: true
-      description: Unique identifier of the invoice
-      schema:
-        type: string
-        format: uuid
-
-    RecurringWalkId:
-      name: recurringWalkId
-      in: path
-      required: true
-      description: Unique identifier of the recurring walk
-      schema:
-        type: string
-        format: uuid
-
-    PageParam:
+    Page:
       name: page
       in: query
+      required: false
       description: Page number (1-based)
       schema:
         type: integer
         minimum: 1
         default: 1
 
-    PageSizeParam:
+    PageSize:
       name: pageSize
       in: query
+      required: false
       description: Number of results per page
       schema:
         type: integer
@@ -1627,1635 +273,206 @@ components:
         maximum: 100
         default: 20
 
-  # ---------------------------------------------------------------------------
-  # Responses
-  # ---------------------------------------------------------------------------
-
-  responses:
-
-    BadRequest:
-      description: Invalid request payload or parameters
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-          examples:
-            validationError:
-              summary: Validation error
-              value:
-                code: VALIDATION_ERROR
-                message: One or more fields failed validation.
-                details:
-                  - field: email
-                    issue: Must be a valid email address.
-                  - field: durationMinutes
-                    issue: Must be between 15 and 240.
-            noMatchingRate:
-              summary: No matching rate found
-              value:
-                code: NO_MATCHING_RATE
-                message: No rate found for this walk type, dog count, and duration. Please update the walker's rate card.
-            invalidStateTransition:
-              summary: Invalid state transition
-              value:
-                code: INVALID_STATE_TRANSITION
-                message: This action cannot be performed on a resource in its current status.
-            schedulingConflict:
-              summary: Scheduling conflict
-              value:
-                code: SCHEDULING_CONFLICT
-                message: The walker already has an overlapping walk scheduled for this time.
-
-    Unauthorised:
-      description: Missing or invalid authentication credentials
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-          examples:
-            missingToken:
-              summary: Missing bearer token
-              value:
-                code: AUTHENTICATION_REQUIRED
-                message: A valid bearer token is required to access this resource.
-            invalidCredentials:
-              summary: Invalid login credentials
-              value:
-                code: INVALID_CREDENTIALS
-                message: The email or password provided is incorrect.
-            tokenExpired:
-              summary: Expired token
-              value:
-                code: TOKEN_EXPIRED
-                message: The access token has expired. Please refresh your session.
-
-    Forbidden:
-      description: Authenticated user does not have permission to perform this action
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-          examples:
-            insufficientRole:
-              summary: Insufficient role
-              value:
-                code: FORBIDDEN
-                message: Your role does not have permission to perform this action.
-            notOwnResource:
-              summary: Not own resource
-              value:
-                code: FORBIDDEN
-                message: You can only access your own records.
-
-    NotFound:
-      description: The requested resource was not found
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-          examples:
-            resourceNotFound:
-              summary: Resource not found
-              value:
-                code: RESOURCE_NOT_FOUND
-                message: The requested resource could not be found.
-
-    Conflict:
-      description: The request conflicts with the current state of the resource
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-          examples:
-            duplicateEmail:
-              summary: Duplicate email
-              value:
-                code: DUPLICATE_EMAIL
-                message: A user with this email address already exists.
-            alreadyAccepted:
-              summary: Already accepted
-              value:
-                code: ALREADY_PROCESSED
-                message: This request has already been accepted or declined.
-
-  # ---------------------------------------------------------------------------
-  # Schemas
-  # ---------------------------------------------------------------------------
-
   schemas:
-
-    # --- Interest Requests ----------------------------------------------------
-
-    InterestRequestStatus:
-      type: string
-      enum:
-        - pending
-        - accepted
-        - declined
-      example: pending
-
-    InterestRequestCreate:
-      type: object
-      required:
-        - firstName
-        - lastName
-        - email
-        - phone
-        - postcode
-        - dogDescription
-      properties:
-        firstName:
-          type: string
-          example: Sarah
-        lastName:
-          type: string
-          example: Davies
-        email:
-          type: string
-          format: email
-          example: sarah.davies@example.com
-        phone:
-          type: string
-          example: +44 7700 900789
-        postcode:
-          type: string
-          description: Must be within the Cardiff / South Wales service area
-          example: CF10 1AB
-        dogDescription:
-          type: string
-          description: Brief description of the prospective client's dog(s)
-          example: I have a 2-year-old Golden Retriever called Buddy. Very friendly, no medical issues.
-
-    InterestRequestPublic:
-      type: object
-      description: Confirmation returned to the prospective client after submission
-      required:
-        - id
-        - createdAt
-      properties:
-        id:
-          type: string
-          format: uuid
-          example: aabb1122-ccdd-3344-eeff-556677889900
-        createdAt:
-          type: string
-          format: date-time
-          example: '2026-03-28T10:00:00Z'
-
-    InterestRequestUpdate:
-      type: object
-      properties:
-        notes:
-          type: string
-          description: Internal walker notes (not visible to the prospective client)
-          example: Spoke to Sarah on the phone. Buddy sounds like a great fit.
-
-    InterestRequestDecline:
-      type: object
-      properties:
-        reason:
-          type: string
-          description: Reason for declining the interest request
-          example: We are not currently covering the CF5 area.
-
-    InterestRequest:
-      type: object
-      required:
-        - id
-        - firstName
-        - lastName
-        - email
-        - phone
-        - postcode
-        - dogDescription
-        - status
-        - createdAt
-        - updatedAt
-      properties:
-        id:
-          type: string
-          format: uuid
-          example: aabb1122-ccdd-3344-eeff-556677889900
-        firstName:
-          type: string
-          example: Sarah
-        lastName:
-          type: string
-          example: Davies
-        email:
-          type: string
-          format: email
-          example: sarah.davies@example.com
-        phone:
-          type: string
-          example: +44 7700 900789
-        postcode:
-          type: string
-          example: CF10 1AB
-        dogDescription:
-          type: string
-          example: I have a 2-year-old Golden Retriever called Buddy.
-        status:
-          $ref: '#/components/schemas/InterestRequestStatus'
-        declineReason:
-          type: string
-          nullable: true
-          example: null
-        notes:
-          type: string
-          nullable: true
-          description: Internal walker notes; not returned to unauthenticated callers
-          example: Spoke to Sarah on the phone.
-        ownerId:
-          type: string
-          format: uuid
-          nullable: true
-          description: Set when the interest request is accepted and an owner account is created
-          example: null
-        createdAt:
-          type: string
-          format: date-time
-          example: '2026-03-28T10:00:00Z'
-        updatedAt:
-          type: string
-          format: date-time
-          example: '2026-03-28T10:00:00Z'
-
-    InterestRequestList:
-      type: object
-      required:
-        - data
-        - pagination
-      properties:
-        data:
-          type: array
-          items:
-            $ref: '#/components/schemas/InterestRequest'
-        pagination:
-          $ref: '#/components/schemas/Pagination'
-
-    # --- Shared ---------------------------------------------------------------
-
-    Error:
-      type: object
-      description: |
-        Standard error envelope returned by all endpoints on failure.
-
-        **Known error codes:**
-        - `VALIDATION_ERROR` – One or more request fields failed validation (see `details`).
-        - `NO_MATCHING_RATE` – No walker rate card entry matches the requested walk type, dog count, and duration.
-        - `SCHEDULING_CONFLICT` – The walker has an overlapping walk already scheduled.
-        - `INVALID_STATE_TRANSITION` – The action is not allowed given the resource's current status.
-        - `AUTHENTICATION_REQUIRED` – No valid bearer token was provided.
-        - `INVALID_CREDENTIALS` – Email or password is incorrect.
-        - `TOKEN_EXPIRED` – The access token has expired.
-        - `FORBIDDEN` – The authenticated user does not have permission.
-        - `RESOURCE_NOT_FOUND` – The requested resource does not exist.
-        - `DUPLICATE_EMAIL` – A user with this email already exists.
-        - `ALREADY_PROCESSED` – The resource has already been accepted or declined.
-      required:
-        - code
-        - message
-      properties:
-        code:
-          type: string
-          description: Machine-readable error code (see list above)
-          example: VALIDATION_ERROR
-        message:
-          type: string
-          description: Human-readable error description
-          example: One or more fields failed validation.
-        details:
-          type: array
-          description: Optional field-level error details, typically present for validation errors
-          items:
-            type: object
-            properties:
-              field:
-                type: string
-                description: The request field that failed validation
-                example: email
-              issue:
-                type: string
-                description: What is wrong with the field
-                example: Must be a valid email address.
-
-    Pagination:
-      type: object
-      required:
-        - page
-        - pageSize
-        - total
-      properties:
-        page:
-          type: integer
-          example: 1
-        pageSize:
-          type: integer
-          example: 20
-        total:
-          type: integer
-          description: Total number of matching records
-          example: 42
-
-    Address:
-      type: object
-      properties:
-        line1:
-          type: string
-          example: 12 Bark Lane
-        line2:
-          type: string
-          example: Apt 3
-        city:
-          type: string
-          example: Pawsville
-        postcode:
-          type: string
-          example: PW1 2AB
-        country:
-          type: string
-          example: GB
-
-    # --- Auth -----------------------------------------------------------------
-
     RegisterRequest:
       type: object
-      required:
-        - email
-        - password
-        - firstName
-        - lastName
-        - role
+      required: [email, password, firstName, lastName, role]
       properties:
         email:
           type: string
           format: email
-          example: jane@example.com
         password:
           type: string
-          format: password
           minLength: 8
-          example: S3cr3tP@ssw0rd
         firstName:
           type: string
-          example: Jane
+          minLength: 1
         lastName:
           type: string
-          example: Smith
+          minLength: 1
         role:
           type: string
-          enum:
-            - owner
-            - walker
-          description: The role of the registering user
-          example: owner
+          enum: [contributor, viewer]
 
     LoginRequest:
       type: object
-      required:
-        - email
-        - password
+      required: [email, password]
       properties:
         email:
           type: string
           format: email
-          example: jane@example.com
         password:
           type: string
-          format: password
-          example: S3cr3tP@ssw0rd
 
     RefreshRequest:
       type: object
-      required:
-        - refreshToken
+      required: [refreshToken]
       properties:
         refreshToken:
           type: string
-          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
     AuthResponse:
       type: object
-      required:
-        - accessToken
-        - refreshToken
-        - expiresIn
-        - user
+      required: [accessToken, refreshToken, expiresIn, user]
       properties:
         accessToken:
           type: string
-          description: JWT access token
-          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
         refreshToken:
           type: string
-          description: Opaque refresh token
-          example: dGhpcyBpcyBhIHJlZnJlc2ggdG9rZW4...
         expiresIn:
           type: integer
           description: Access token lifetime in seconds
-          example: 3600
         user:
           $ref: '#/components/schemas/UserSummary'
 
     UserSummary:
       type: object
-      required:
-        - id
-        - email
-        - firstName
-        - lastName
-        - role
+      required: [id, email, firstName, lastName, role]
       properties:
         id:
           type: string
           format: uuid
-          example: 3fa85f64-5717-4562-b3fc-2c963f66afa6
         email:
           type: string
           format: email
-          example: jane@example.com
         firstName:
           type: string
-          example: Jane
         lastName:
           type: string
-          example: Smith
         role:
           type: string
-          enum:
-            - owner
-            - walker
-          example: owner
+          enum: [contributor, viewer]
 
-    # --- Owners ---------------------------------------------------------------
-
-    OwnerRequest:
+    Item:
       type: object
-      required:
-        - firstName
-        - lastName
-        - email
-        - phone
-      properties:
-        firstName:
-          type: string
-          example: Jane
-        lastName:
-          type: string
-          example: Smith
-        email:
-          type: string
-          format: email
-          example: jane.smith@example.com
-        phone:
-          type: string
-          example: +44 7700 900123
-        address:
-          $ref: '#/components/schemas/Address'
-        notes:
-          type: string
-          description: Additional notes about this owner
-          example: Prefers morning walks.
-
-    Owner:
-      allOf:
-        - $ref: '#/components/schemas/OwnerRequest'
-        - type: object
-          required:
-            - id
-            - createdAt
-            - updatedAt
-          properties:
-            id:
-              type: string
-              format: uuid
-              example: 3fa85f64-5717-4562-b3fc-2c963f66afa6
-            createdAt:
-              type: string
-              format: date-time
-              example: '2025-01-15T09:00:00Z'
-            updatedAt:
-              type: string
-              format: date-time
-              example: '2025-01-15T09:00:00Z'
-
-    OwnerList:
-      type: object
-      required:
-        - data
-        - pagination
-      properties:
-        data:
-          type: array
-          items:
-            $ref: '#/components/schemas/Owner'
-        pagination:
-          $ref: '#/components/schemas/Pagination'
-
-    # --- Walkers --------------------------------------------------------------
-
-    WalkerRequest:
-      type: object
-      required:
-        - firstName
-        - lastName
-        - email
-        - phone
-      properties:
-        firstName:
-          type: string
-          example: Bob
-        lastName:
-          type: string
-          example: Jones
-        email:
-          type: string
-          format: email
-          example: bob.jones@example.com
-        phone:
-          type: string
-          example: +44 7700 900456
-        address:
-          $ref: '#/components/schemas/Address'
-        bio:
-          type: string
-          description: Short biography or description of the walker
-          example: Experienced dog walker with 5 years looking after all breeds.
-        walkRates:
-          type: array
-          description: |
-            Rate card for this walker. The rate applied to a walk is determined
-            by matching walkType, numberOfDogs, and durationMinutes against
-            this list.
-          items:
-            $ref: '#/components/schemas/WalkRate'
-
-    Walker:
-      allOf:
-        - $ref: '#/components/schemas/WalkerRequest'
-        - type: object
-          required:
-            - id
-            - createdAt
-            - updatedAt
-          properties:
-            id:
-              type: string
-              format: uuid
-              example: 7b1e4d2a-1234-5678-abcd-ef0123456789
-            createdAt:
-              type: string
-              format: date-time
-              example: '2025-01-10T08:00:00Z'
-            updatedAt:
-              type: string
-              format: date-time
-              example: '2025-01-10T08:00:00Z'
-
-    WalkerList:
-      type: object
-      required:
-        - data
-        - pagination
-      properties:
-        data:
-          type: array
-          items:
-            $ref: '#/components/schemas/Walker'
-        pagination:
-          $ref: '#/components/schemas/Pagination'
-
-    # --- Dogs -----------------------------------------------------------------
-
-    DogRequest:
-      type: object
-      required:
-        - name
-        - breed
-        - dateOfBirth
-      properties:
-        name:
-          type: string
-          example: Max
-        breed:
-          type: string
-          example: Labrador Retriever
-        dateOfBirth:
-          type: string
-          format: date
-          example: '2020-06-15'
-        sex:
-          type: string
-          enum:
-            - male
-            - female
-          example: male
-        colour:
-          type: string
-          example: Golden
-        microchipNumber:
-          type: string
-          description: ISO 11784/11785 microchip identifier
-          example: '985141000123456'
-        vaccinations:
-          type: array
-          items:
-            $ref: '#/components/schemas/Vaccination'
-        vetContact:
-          $ref: '#/components/schemas/VetContact'
-        medicalNotes:
-          type: string
-          description: Any medical conditions or special care instructions
-          example: Allergic to certain grasses. Requires Apoquel daily.
-        behaviourNotes:
-          type: string
-          description: Behavioural notes relevant for walkers
-          example: Can be nervous around large dogs; keep on lead near traffic.
-
-    Dog:
-      allOf:
-        - $ref: '#/components/schemas/DogRequest'
-        - type: object
-          required:
-            - id
-            - ownerId
-            - createdAt
-            - updatedAt
-          properties:
-            id:
-              type: string
-              format: uuid
-              example: c1a2b3d4-5678-90ab-cdef-1234567890ab
-            ownerId:
-              type: string
-              format: uuid
-              example: 3fa85f64-5717-4562-b3fc-2c963f66afa6
-            createdAt:
-              type: string
-              format: date-time
-              example: '2025-02-01T10:30:00Z'
-            updatedAt:
-              type: string
-              format: date-time
-              example: '2025-02-01T10:30:00Z'
-
-    DogList:
-      type: object
-      required:
-        - data
-        - pagination
-      properties:
-        data:
-          type: array
-          items:
-            $ref: '#/components/schemas/Dog'
-        pagination:
-          $ref: '#/components/schemas/Pagination'
-
-    Vaccination:
-      type: object
-      required:
-        - name
-        - dateAdministered
-      properties:
-        name:
-          type: string
-          example: Distemper, Hepatitis, Parvovirus (DHP)
-        dateAdministered:
-          type: string
-          format: date
-          example: '2024-03-20'
-        nextDueDate:
-          type: string
-          format: date
-          example: '2025-03-20'
-
-    VetContact:
-      type: object
-      properties:
-        name:
-          type: string
-          example: Riverside Veterinary Clinic
-        phone:
-          type: string
-          example: +44 1234 567890
-        address:
-          $ref: '#/components/schemas/Address'
-
-    # --- Walk Requests --------------------------------------------------------
-
-    WalkRequestStatus:
-      type: string
-      enum:
-        - pending
-        - accepted
-        - declined
-        - cancelled
-      example: pending
-
-    WalkType:
-      type: string
-      enum:
-        - solo_walk
-        - group_walk
-        - adventure_walk
-        - puppy_walk
-      description: |
-        The format of the walk. Together with the number of dogs and duration,
-        this determines which rate from the walker's rate card applies.
-      example: solo_walk
-
-    WalkRate:
-      type: object
-      required:
-        - walkType
-        - numberOfDogs
-        - durationMinutes
-        - ratePerHour
-      properties:
-        walkType:
-          $ref: '#/components/schemas/WalkType'
-        numberOfDogs:
-          type: integer
-          minimum: 1
-          description: Number of dogs this rate entry applies to
-          example: 1
-        durationMinutes:
-          type: integer
-          minimum: 15
-          maximum: 240
-          description: Walk duration (in minutes) this rate entry applies to
-          example: 60
-        ratePerHour:
-          type: number
-          format: float
-          description: Hourly rate in GBP for this walkType/numberOfDogs/durationMinutes combination
-          example: 18.00
-
-    WalkRequestCreate:
-      type: object
-      required:
-        - ownerId
-        - dogIds
-        - requestedDate
-        - requestedStartTime
-        - durationMinutes
-        - walkType
-      properties:
-        ownerId:
-          type: string
-          format: uuid
-          example: 3fa85f64-5717-4562-b3fc-2c963f66afa6
-        dogIds:
-          type: array
-          minItems: 1
-          items:
-            type: string
-            format: uuid
-          example:
-            - c1a2b3d4-5678-90ab-cdef-1234567890ab
-        preferredWalkerId:
-          type: string
-          format: uuid
-          description: Optional preferred walker
-          example: 7b1e4d2a-1234-5678-abcd-ef0123456789
-        requestedDate:
-          type: string
-          format: date
-          example: '2025-04-10'
-        requestedStartTime:
-          type: string
-          format: time
-          description: Requested start time in HH:MM:SS format (RFC 3339)
-          example: '09:00:00Z'
-        durationMinutes:
-          type: integer
-          minimum: 15
-          maximum: 240
-          description: Requested walk duration in minutes
-          example: 60
-        walkType:
-          $ref: '#/components/schemas/WalkType'
-        notes:
-          type: string
-          description: Special instructions for the walker
-          example: Please use the harness hanging by the front door.
-
-    WalkRequestAccept:
-      type: object
-      required:
-        - walkerId
-        - confirmedDate
-        - confirmedStartTime
-      properties:
-        walkerId:
-          type: string
-          format: uuid
-          example: 7b1e4d2a-1234-5678-abcd-ef0123456789
-        confirmedDate:
-          type: string
-          format: date
-          example: '2025-04-10'
-        confirmedStartTime:
-          type: string
-          format: time
-          example: '09:00:00Z'
-        notes:
-          type: string
-          example: I'll be there at 9am sharp!
-
-    WalkRequestDecline:
-      type: object
-      properties:
-        reason:
-          type: string
-          description: Reason for declining the request
-          example: I am fully booked on that date.
-
-    WalkRequest:
-      type: object
-      required:
-        - id
-        - ownerId
-        - dogIds
-        - requestedDate
-        - requestedStartTime
-        - durationMinutes
-        - walkType
-        - status
-        - createdAt
-        - updatedAt
+      required: [id, name, description, status, contributorId, createdAt, updatedAt]
       properties:
         id:
           type: string
           format: uuid
-          example: aa11bb22-cc33-dd44-ee55-ff6677889900
-        ownerId:
+        name:
           type: string
-          format: uuid
-          example: 3fa85f64-5717-4562-b3fc-2c963f66afa6
-        dogIds:
-          type: array
-          items:
-            type: string
-            format: uuid
-          example:
-            - c1a2b3d4-5678-90ab-cdef-1234567890ab
-        preferredWalkerId:
-          type: string
-          format: uuid
-          nullable: true
-          example: 7b1e4d2a-1234-5678-abcd-ef0123456789
-        requestedDate:
-          type: string
-          format: date
-          example: '2025-04-10'
-        requestedStartTime:
-          type: string
-          format: time
-          example: '09:00:00Z'
-        durationMinutes:
-          type: integer
-          example: 60
-        walkType:
-          $ref: '#/components/schemas/WalkType'
-        notes:
-          type: string
-          description: Special instructions for the walker
-          example: Please use the harness hanging by the front door.
-        status:
-          $ref: '#/components/schemas/WalkRequestStatus'
-        declineReason:
-          type: string
-          nullable: true
-          example: I am fully booked on that date.
-        walkId:
-          type: string
-          format: uuid
-          nullable: true
-          description: Set when a walk is created from this request
-          example: null
-        createdAt:
-          type: string
-          format: date-time
-          example: '2025-04-01T14:00:00Z'
-        recurringWalkId:
-          type: string
-          format: uuid
-          nullable: true
-          description: Set when this request was generated from a recurring walk schedule
-          example: null
-        updatedAt:
-          type: string
-          format: date-time
-          example: '2025-04-01T14:00:00Z'
-
-    WalkRequestList:
-      type: object
-      required:
-        - data
-        - pagination
-      properties:
-        data:
-          type: array
-          items:
-            $ref: '#/components/schemas/WalkRequest'
-        pagination:
-          $ref: '#/components/schemas/Pagination'
-
-    # --- Walks ----------------------------------------------------------------
-
-    WalkStatus:
-      type: string
-      enum:
-        - scheduled
-        - in_progress
-        - completed
-        - cancelled
-      example: scheduled
-
-    WalkEdit:
-      type: object
-      properties:
-        scheduledDate:
-          type: string
-          format: date
-          example: '2025-04-10'
-        scheduledStartTime:
-          type: string
-          format: time
-          example: '09:15:00Z'
-        durationMinutes:
-          type: integer
-          minimum: 15
-          maximum: 240
-          example: 60
-        routeNotes:
-          type: string
-          description: Notes about the planned walking route
-          example: Use the river path today.
-
-    WalkStart:
-      type: object
-      required:
-        - actualStartTime
-      properties:
-        actualStartTime:
-          type: string
-          format: date-time
-          description: The actual time the walk started
-          example: '2025-04-10T09:01:00Z'
-
-    WalkComplete:
-      type: object
-      properties:
-        actualStartTime:
-          type: string
-          format: date-time
-          example: '2025-04-10T09:02:00Z'
-        actualEndTime:
-          type: string
-          format: date-time
-          example: '2025-04-10T10:05:00Z'
-        distanceKm:
-          type: number
-          format: float
-          description: Distance walked in kilometres
-          example: 3.2
-        summaryNotes:
-          type: string
-          description: Walker's summary of the walk
-          example: All dogs were very well behaved today!
-
-    WalkCancel:
-      type: object
-      properties:
-        reason:
-          type: string
-          description: Reason for cancelling the walk
-          example: Dog owner had an emergency.
-
-    Walk:
-      type: object
-      required:
-        - id
-        - requestId
-        - ownerId
-        - walkerId
-        - dogIds
-        - scheduledDate
-        - scheduledStartTime
-        - durationMinutes
-        - walkType
-        - agreedRate
-        - status
-        - createdAt
-        - updatedAt
-      properties:
-        id:
-          type: string
-          format: uuid
-          example: dd00ee11-ff22-aa33-bb44-cc5566778899
-        requestId:
-          type: string
-          format: uuid
-          example: aa11bb22-cc33-dd44-ee55-ff6677889900
-        ownerId:
-          type: string
-          format: uuid
-          example: 3fa85f64-5717-4562-b3fc-2c963f66afa6
-        walkerId:
-          type: string
-          format: uuid
-          example: 7b1e4d2a-1234-5678-abcd-ef0123456789
-        dogIds:
-          type: array
-          items:
-            type: string
-            format: uuid
-          example:
-            - c1a2b3d4-5678-90ab-cdef-1234567890ab
-        scheduledDate:
-          type: string
-          format: date
-          example: '2025-04-10'
-        scheduledStartTime:
-          type: string
-          format: time
-          example: '09:00:00Z'
-        durationMinutes:
-          type: integer
-          example: 60
-        walkType:
-          $ref: '#/components/schemas/WalkType'
-        agreedRate:
-          type: number
-          format: float
-          description: |
-            Hourly rate in GBP (matching `WalkRate.ratePerHour`) resolved from
-            the walker's rate card at the time the walk request was accepted,
-            based on walkType, number of dogs, and durationMinutes. The total
-            walk cost is derived at invoicing time (quantity × unitPrice).
-          example: 18.00
-        status:
-          $ref: '#/components/schemas/WalkStatus'
-        routeNotes:
-          type: string
-          nullable: true
-          example: Use the river path today.
-        actualStartTime:
-          type: string
-          format: date-time
-          nullable: true
-          example: null
-        actualEndTime:
-          type: string
-          format: date-time
-          nullable: true
-          example: null
-        distanceKm:
-          type: number
-          format: float
-          nullable: true
-          example: null
-        summaryNotes:
-          type: string
-          nullable: true
-          example: null
-        cancelReason:
-          type: string
-          nullable: true
-          example: null
-        createdAt:
-          type: string
-          format: date-time
-          example: '2025-04-01T15:00:00Z'
-        updatedAt:
-          type: string
-          format: date-time
-          example: '2025-04-01T15:00:00Z'
-
-    WalkList:
-      type: object
-      required:
-        - data
-        - pagination
-      properties:
-        data:
-          type: array
-          items:
-            $ref: '#/components/schemas/Walk'
-        pagination:
-          $ref: '#/components/schemas/Pagination'
-
-    # --- Walk Updates ---------------------------------------------------------
-
-    WalkUpdateCreate:
-      type: object
-      required:
-        - type
-      properties:
-        type:
-          type: string
-          enum:
-            - note
-            - image
-          description: Type of update
-          example: note
-        note:
-          type: string
-          description: Text note about the walk (required when type is 'note')
-          example: Max is having a great time chasing squirrels!
-        image:
-          type: string
-          format: binary
-          description: Image file upload (required when type is 'image')
-        imageCaption:
-          type: string
-          description: Optional caption for the uploaded image
-          example: Max splashing in the river!
-
-    WalkUpdateItem:
-      type: object
-      required:
-        - id
-        - walkId
-        - type
-        - createdAt
-      properties:
-        id:
-          type: string
-          format: uuid
-          example: 11223344-5566-7788-99aa-bbccddeeff00
-        walkId:
-          type: string
-          format: uuid
-          example: dd00ee11-ff22-aa33-bb44-cc5566778899
-        type:
-          type: string
-          enum:
-            - note
-            - image
-          example: note
-        note:
-          type: string
-          nullable: true
-          example: Max is having a great time chasing squirrels!
-        imageUrl:
-          type: string
-          format: uri
-          nullable: true
-          description: URL of the uploaded image
-          example: https://storage.dogwalking.example.com/walks/dd00ee11/max-river.jpg
-        imageCaption:
-          type: string
-          nullable: true
-          example: Max splashing in the river!
-        createdAt:
-          type: string
-          format: date-time
-          example: '2025-04-10T09:30:00Z'
-
-    WalkUpdateList:
-      type: object
-      required:
-        - data
-        - pagination
-      properties:
-        data:
-          type: array
-          items:
-            $ref: '#/components/schemas/WalkUpdateItem'
-        pagination:
-          $ref: '#/components/schemas/Pagination'
-
-    # --- Invoices -------------------------------------------------------------
-
-    InvoiceStatus:
-      type: string
-      enum:
-        - draft
-        - sent
-        - paid
-        - overdue
-        - cancelled
-      example: sent
-
-    InvoiceLineItem:
-      type: object
-      required:
-        - walkId
-        - description
-        - quantity
-        - unitPrice
-      properties:
-        walkId:
-          type: string
-          format: uuid
-          description: The walk this line item relates to
-          example: dd00ee11-ff22-aa33-bb44-cc5566778899
+          minLength: 1
         description:
           type: string
-          example: '1 hour dog walk – 10 Apr 2025'
-        quantity:
-          type: number
-          format: float
-          description: Number of hours or units
-          example: 1.0
-        unitPrice:
-          type: number
-          format: float
-          description: Price per unit in GBP
-          example: 15.00
-        total:
-          type: number
-          format: float
-          readOnly: true
-          description: Calculated line total (quantity × unitPrice)
-          example: 15.00
-
-    RecurringWalkStatus:
-      type: string
-      enum:
-        - active
-        - paused
-        - cancelled
-      example: active
-
-    RecurringWalkFrequency:
-      type: string
-      enum:
-        - weekly
-        - fortnightly
-      example: weekly
-
-    RecurrenceSchedule:
-      type: object
-      required:
-        - frequency
-        - dayOfWeek
-        - startTime
-      properties:
-        frequency:
-          $ref: '#/components/schemas/RecurringWalkFrequency'
-        dayOfWeek:
-          type: string
-          enum:
-            - monday
-            - tuesday
-            - wednesday
-            - thursday
-            - friday
-            - saturday
-            - sunday
-          example: monday
-        startTime:
-          type: string
-          format: time
-          description: Walk start time in RFC 3339 HH:MM:SS format
-          example: '09:00:00Z'
-
-    RecurringWalkUpdate:
-      type: object
-      properties:
-        ownerId:
-          type: string
-          format: uuid
-          example: 3fa85f64-5717-4562-b3fc-2c963f66afa6
-        dogIds:
-          type: array
-          minItems: 1
-          items:
-            type: string
-            format: uuid
-          example:
-            - a1b2c3d4-e5f6-7890-abcd-ef1234567890
-        walkType:
-          $ref: '#/components/schemas/WalkType'
-        durationMinutes:
-          type: integer
-          minimum: 15
-          maximum: 240
-          example: 60
-        recurrence:
-          $ref: '#/components/schemas/RecurrenceSchedule'
-        preferredWalkerId:
-          type: string
-          format: uuid
-          example: 7b1e4d2a-1234-5678-abcd-ef0123456789
-        startDate:
-          type: string
-          format: date
-          example: '2025-05-05'
-        endDate:
-          type: string
-          format: date
-          example: '2025-12-31'
-        notes:
-          type: string
-          example: Please use the side gate.
-
-    RecurringWalkCreate:
-      type: object
-      required:
-        - ownerId
-        - dogIds
-        - walkType
-        - durationMinutes
-        - recurrence
-        - startDate
-      properties:
-        ownerId:
-          type: string
-          format: uuid
-          example: 3fa85f64-5717-4562-b3fc-2c963f66afa6
-        dogIds:
-          type: array
-          minItems: 1
-          items:
-            type: string
-            format: uuid
-          example:
-            - a1b2c3d4-e5f6-7890-abcd-ef1234567890
-        walkType:
-          $ref: '#/components/schemas/WalkType'
-        durationMinutes:
-          type: integer
-          minimum: 15
-          maximum: 240
-          example: 60
-        recurrence:
-          $ref: '#/components/schemas/RecurrenceSchedule'
-        preferredWalkerId:
-          type: string
-          format: uuid
-          description: Optional preferred walker for every generated WalkRequest
-          example: 7b1e4d2a-1234-5678-abcd-ef0123456789
-        startDate:
-          type: string
-          format: date
-          description: Date of the first generated WalkRequest
-          example: '2025-05-05'
-        endDate:
-          type: string
-          format: date
-          description: Date after which no more WalkRequests are generated; omit for indefinite
-          example: '2025-12-31'
-        notes:
-          type: string
-          description: Standing instructions for every walk in the schedule
-          example: Please use the side gate.
-
-    RecurringWalk:
-      type: object
-      required:
-        - id
-        - ownerId
-        - dogIds
-        - walkType
-        - durationMinutes
-        - recurrence
-        - startDate
-        - status
-        - createdAt
-        - updatedAt
-      properties:
-        id:
-          type: string
-          format: uuid
-          example: c9d0e1f2-a3b4-5678-cdef-012345678901
-        ownerId:
-          type: string
-          format: uuid
-          example: 3fa85f64-5717-4562-b3fc-2c963f66afa6
-        dogIds:
-          type: array
-          minItems: 1
-          items:
-            type: string
-            format: uuid
-        walkType:
-          $ref: '#/components/schemas/WalkType'
-        durationMinutes:
-          type: integer
-          example: 60
-        recurrence:
-          $ref: '#/components/schemas/RecurrenceSchedule'
-        startDate:
-          type: string
-          format: date
-          example: '2025-05-05'
-        endDate:
-          type: string
-          format: date
-          example: '2025-12-31'
-        notes:
-          type: string
-          example: Please use the side gate.
-        preferredWalkerId:
-          type: string
-          format: uuid
           nullable: true
-          description: Preferred walker for every generated WalkRequest
-          example: 7b1e4d2a-1234-5678-abcd-ef0123456789
         status:
-          $ref: '#/components/schemas/RecurringWalkStatus'
+          type: string
+          enum: [active, archived]
+        contributorId:
+          type: string
+          format: uuid
+          description: ID of the user who created this item
         createdAt:
           type: string
           format: date-time
-          example: '2025-04-01T10:00:00Z'
         updatedAt:
           type: string
           format: date-time
-          example: '2025-04-01T10:00:00Z'
 
-    RecurringWalkList:
+    ItemList:
       type: object
+      required: [data, pagination]
       properties:
         data:
           type: array
           items:
-            $ref: '#/components/schemas/RecurringWalk'
+            $ref: '#/components/schemas/Item'
         pagination:
           $ref: '#/components/schemas/Pagination'
 
-    InvoiceUpdate:
+    Pagination:
       type: object
+      required: [page, pageSize, total]
       properties:
-        ownerId:
-          type: string
-          format: uuid
-          example: 3fa85f64-5717-4562-b3fc-2c963f66afa6
-        walkerId:
-          type: string
-          format: uuid
-          example: 7b1e4d2a-1234-5678-abcd-ef0123456789
-        lineItems:
-          type: array
-          minItems: 1
-          items:
-            $ref: '#/components/schemas/InvoiceLineItem'
-        dueDate:
-          type: string
-          format: date
-          description: Payment due date
-          example: '2025-04-30'
-        notes:
-          type: string
-          description: Additional notes on the invoice
-          example: Thank you for choosing Happy Paws Walking Service!
-
-    InvoiceRequest:
-      type: object
-      required:
-        - ownerId
-        - walkerId
-        - lineItems
-        - dueDate
-      properties:
-        ownerId:
-          type: string
-          format: uuid
-          example: 3fa85f64-5717-4562-b3fc-2c963f66afa6
-        walkerId:
-          type: string
-          format: uuid
-          example: 7b1e4d2a-1234-5678-abcd-ef0123456789
-        lineItems:
-          type: array
-          minItems: 1
-          items:
-            $ref: '#/components/schemas/InvoiceLineItem'
-        dueDate:
-          type: string
-          format: date
-          description: Payment due date
-          example: '2025-04-30'
-        notes:
-          type: string
-          description: Additional notes on the invoice
-          example: Thank you for choosing Happy Paws Walking Service!
-
-    InvoicePayment:
-      type: object
-      required:
-        - paymentMethod
-        - paidAt
-      properties:
-        paymentMethod:
-          type: string
-          enum:
-            - bank_transfer
-            - card
-            - cash
-            - other
-          example: bank_transfer
-        paidAt:
-          type: string
-          format: date-time
-          example: '2025-04-15T11:00:00Z'
-        reference:
-          type: string
-          description: Payment reference or transaction ID
-          example: TXN-20250415-001
-
-    Invoice:
-      type: object
-      required:
-        - id
-        - ownerId
-        - walkerId
-        - lineItems
-        - subtotal
-        - taxRate
-        - taxAmount
-        - total
-        - dueDate
-        - status
-        - createdAt
-        - updatedAt
-      properties:
-        id:
-          type: string
-          format: uuid
-          example: ffee1122-3344-5566-7788-99aabbccddee
-        invoiceNumber:
-          type: string
-          description: Human-readable invoice number
-          example: INV-2025-0042
-        ownerId:
-          type: string
-          format: uuid
-          example: 3fa85f64-5717-4562-b3fc-2c963f66afa6
-        walkerId:
-          type: string
-          format: uuid
-          example: 7b1e4d2a-1234-5678-abcd-ef0123456789
-        lineItems:
-          type: array
-          items:
-            $ref: '#/components/schemas/InvoiceLineItem'
-        subtotal:
-          type: number
-          format: float
-          description: Sum of all line item totals before any tax
-          example: 45.00
-        taxRate:
-          type: number
-          format: float
-          description: Tax rate applied as a percentage
-          example: 0.00
-        taxAmount:
-          type: number
-          format: float
-          example: 0.00
+        page:
+          type: integer
+        pageSize:
+          type: integer
         total:
-          type: number
-          format: float
-          description: Total amount due including tax
-          example: 45.00
-        dueDate:
-          type: string
-          format: date
-          example: '2025-04-30'
-        status:
-          $ref: '#/components/schemas/InvoiceStatus'
-        notes:
-          type: string
-          nullable: true
-          example: Thank you for choosing Happy Paws Walking Service!
-        paidAt:
-          type: string
-          format: date-time
-          nullable: true
-          example: null
-        paymentMethod:
-          type: string
-          nullable: true
-          example: null
-        paymentReference:
-          type: string
-          nullable: true
-          example: null
-        createdAt:
-          type: string
-          format: date-time
-          example: '2025-04-16T09:00:00Z'
-        updatedAt:
-          type: string
-          format: date-time
-          example: '2025-04-16T09:00:00Z'
+          type: integer
 
-    InvoiceList:
+    CreateItemRequest:
       type: object
-      required:
-        - data
-        - pagination
+      required: [name]
       properties:
-        data:
+        name:
+          type: string
+          minLength: 1
+        description:
+          type: string
+          nullable: true
+
+    UpdateItemRequest:
+      type: object
+      minProperties: 1
+      properties:
+        name:
+          type: string
+          minLength: 1
+        description:
+          type: string
+          nullable: true
+        status:
+          type: string
+          enum: [active, archived]
+
+    Error:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+
+    ValidationError:
+      type: object
+      required: [code, message, details]
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
           type: array
           items:
-            $ref: '#/components/schemas/Invoice'
-        pagination:
-          $ref: '#/components/schemas/Pagination'
+            type: object
+            required: [field, issue]
+            properties:
+              field:
+                type: string
+              issue:
+                type: string
+
+  responses:
+    ValidationError:
+      description: Request body or parameters failed validation
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ValidationError'
+    AuthenticationError:
+      description: Missing or invalid authentication token
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    ForbiddenError:
+      description: Authenticated user lacks permission for this operation
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFoundError:
+      description: The requested resource was not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    ConflictError:
+      description: A resource with the same unique identifier already exists
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'

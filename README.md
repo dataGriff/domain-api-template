@@ -87,9 +87,9 @@ Use this checklist each time you instantiate the template for a new project:
 | CI | `.github/workflows/` | GitHub Actions: API tests + docs deploy |
 | AI guidelines | `.github/instructions/`, `AGENTS.md` | Copilot/agent rules (specs-first, task-first) |
 
-### Example Domain (dog-walking)
+### Example Domain (Items)
 
-The working example included in this template is a **dog-walking management platform**. It demonstrates all the patterns you need to follow:
+The working example included in this template is a minimal **Items catalogue** — two roles (`contributor`, `viewer`) and one resource (`items`). It demonstrates all the patterns you need to follow:
 
 - OpenAPI + AsyncAPI contracts → `docs/specifications/contracts/`
 - Auth matrix → `docs/specifications/auth-matrix.md`
