@@ -111,7 +111,7 @@ tasks:
           -H "Authorization: Bearer {{.CONTRIBUTOR_TOKEN}}" | jq .
 
   items:create:
-    desc: Create a new item (saves ITEM_ID)
+    desc: Add a new item to the catalogue (saves ITEM_ID)
     vars:
       DEMO_ID:
         sh: grep '^DEMO_ID=' {{.STATE}} 2>/dev/null | cut -d= -f2-
@@ -159,7 +159,7 @@ tasks:
           -d '{"status": "archived"}' | jq .
 
   items:delete:
-    desc: Delete the demo item
+    desc: Remove the demo item from the catalogue
     vars:
       CONTRIBUTOR_TOKEN:
         sh: grep '^CONTRIBUTOR_TOKEN=' {{.STATE}} 2>/dev/null | cut -d= -f2-
@@ -183,7 +183,7 @@ tasks:
           -H "Authorization: Bearer {{.VIEWER_TOKEN}}" | jq .
 
   items:create:viewer:
-    desc: Attempt to create an item as a viewer (expects 403 Forbidden)
+    desc: Attempt to add an item as a viewer (expects 403 Forbidden)
     vars:
       VIEWER_TOKEN:
         sh: grep '^VIEWER_TOKEN=' {{.STATE}} 2>/dev/null | cut -d= -f2-
@@ -208,7 +208,7 @@ tasks:
       - task: auth:register:contributor
       - task: auth:register:viewer
       - echo ""
-      - echo "=== 2. Contributor creates an item ==="
+      - echo "=== 2. Contributor adds an item ==="
       - task: items:create
       - echo ""
       - echo "=== 3. List items (contributor view) ==="
@@ -217,16 +217,16 @@ tasks:
       - echo "=== 4. Viewer lists items (read-only) ==="
       - task: items:list:viewer
       - echo ""
-      - echo "=== 5. Viewer tries to create (expect 403) ==="
+      - echo "=== 5. Viewer tries to add (expect 403) ==="
       - task: items:create:viewer
       - echo ""
       - echo "=== 6. Get specific item ==="
       - task: items:get
       - echo ""
-      - echo "=== 7. Update item (archive it) ==="
+      - echo "=== 7. Edit item (archive it) ==="
       - task: items:update
       - echo ""
-      - echo "=== 8. Delete item ==="
+      - echo "=== 8. Remove item ==="
       - task: items:delete
       - echo ""
       - echo "=== Demo complete ==="

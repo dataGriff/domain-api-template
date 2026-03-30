@@ -8,7 +8,7 @@
 
 ## Problem Statement
 
-Teams building new APIs need a consistent, spec-driven starting point that demonstrates all the key patterns (auth, RBAC, CRUD, pagination, events) without domain complexity getting in the way.
+Teams building new APIs need a consistent, spec-driven starting point that demonstrates all the key patterns (auth, role-based access control, item lifecycle management, pagination, events) without domain complexity getting in the way.
 
 **Business:** Domain API Template — reusable scaffold.
 
@@ -21,7 +21,7 @@ The **Items** domain provides a minimal, working example that anyone can underst
 A user who can create and manage their own items.
 
 - **Goal:** Add items to the catalogue and keep them up to date.
-- **Frustration:** Too many steps to create a simple item; can't easily archive old items.
+- **Frustration:** Too many steps to add a simple item; can't easily archive old items.
 
 ### Viewer
 
@@ -32,7 +32,7 @@ A user who can browse the item catalogue but cannot make changes.
 
 ## Goals
 
-1. Provide a minimal, running API example that demonstrates authentication, RBAC, CRUD, and pagination.
+1. Provide a minimal, running API example that demonstrates authentication, role-based access control, item lifecycle management, and pagination.
 2. Keep the example simple enough that any developer can grasp the full domain in under 5 minutes.
 3. Show — not just describe — the template patterns so they are easy to replicate in a new domain.
 
@@ -69,16 +69,16 @@ A user who can browse the item catalogue but cannot make changes.
 
 ### Items
 
-#### US-003: Create an item
+#### US-003: Add an item to the catalogue
 
 **As a** contributor,
-**I want to** create a new item with a name and optional description,
+**I want to** add a new item with a name and optional description,
 **So that** it appears in the catalogue.
 
 **Acceptance Criteria:**
-- [x] POST /v1/items creates an item with `status: active`
+- [x] POST /v1/items adds an item with `status: active`
 - [x] Item is associated with the authenticated contributor's ID
-- [x] Viewers cannot create items (403)
+- [x] Viewers cannot add items (403)
 
 #### US-004: List all items
 
@@ -100,27 +100,27 @@ A user who can browse the item catalogue but cannot make changes.
 - [x] GET /v1/items/:itemId returns the item
 - [x] Returns 404 if not found
 
-#### US-006: Update my own item
+#### US-006: Edit my own item
 
 **As a** contributor,
-**I want to** update the name, description, or status of an item I created,
+**I want to** edit the name, description, or status of an item I added,
 **So that** I can keep the catalogue accurate.
 
 **Acceptance Criteria:**
-- [x] PATCH /v1/items/:itemId updates the item
+- [x] PATCH /v1/items/:itemId edits the item
 - [x] Returns 403 if the item belongs to a different contributor
-- [x] Viewers cannot update items (403)
+- [x] Viewers cannot edit items (403)
 
-#### US-007: Delete my own item
+#### US-007: Remove my own item from the catalogue
 
 **As a** contributor,
-**I want to** delete an item I created,
-**So that** it is removed from the catalogue.
+**I want to** remove an item I added,
+**So that** it is no longer in the catalogue.
 
 **Acceptance Criteria:**
-- [x] DELETE /v1/items/:itemId deletes the item
+- [x] DELETE /v1/items/:itemId removes the item
 - [x] Returns 403 if the item belongs to a different contributor
-- [x] Viewers cannot delete items (403)
+- [x] Viewers cannot remove items (403)
 
 ## Constraints
 

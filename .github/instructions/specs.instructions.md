@@ -27,3 +27,7 @@ Files in `docs/specifications/` are **authoritative business requirements**. The
 ## When asked to update a spec
 
 Confirm the intent is a deliberate business change before editing. Ask: "This would change the authoritative spec — is this a deliberate business decision?"
+
+## Language in specs
+
+Use business language throughout — name user stories, operations, and events with domain verbs (e.g. "Add item to catalogue", "Archive item", "Remove item") rather than generic CRUD verbs ("Create", "Update", "Delete"). Specs should read like business requirements, not database documentation.

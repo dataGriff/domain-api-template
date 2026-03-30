@@ -64,6 +64,7 @@ task docs:serve     # serve this documentation site locally
 4. **Auth matrix is authoritative for access control.** All route and middleware logic must match it exactly.
 5. **OpenAPI contract is authoritative for the REST API.** Paths, methods, request/response shapes, and status codes must match.
 6. **Task-first.** Run `task` to discover commands. If no task exists for an operation, add one before running it.
+7. **Business language over CRUD.** Use domain verbs in specs, user stories, descriptions, and comments. Prefer "add / edit / remove / archive" over "create / update / delete" in any human-readable context. HTTP methods and technical identifiers keep their technical names.
 
 ---
 
@@ -71,11 +72,11 @@ task docs:serve     # serve this documentation site locally
 
 The included example is a minimal **Items catalogue** — two roles and one resource — generic enough to learn from without domain noise:
 
-- **2 roles**: `contributor` (create/update/delete own items) · `viewer` (read-only)
+- **2 roles**: `contributor` (add/edit/remove own items) · `viewer` (read-only)
 - **1 resource**: `items` (id, name, description, status, contributorId, createdAt, updatedAt)
 - Authentication: register, login, refresh token, logout (JWT)
 
-This example demonstrates auth, RBAC, CRUD, ownership rules, pagination, and domain events end-to-end.
+This example demonstrates auth, RBAC, item lifecycle, ownership rules, pagination, and domain events end-to-end.
 Replace it entirely when you instantiate the template for a real domain.
 
 ---

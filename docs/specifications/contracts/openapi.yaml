@@ -28,7 +28,7 @@ tags:
   - name: Auth
     description: Authentication — register, login, refresh tokens, and logout
   - name: Items
-    description: Item management — create, list, view, update, and delete items
+    description: Item management — add, list, view, edit, and remove items
 
 paths:
   /v1/auth/register:
@@ -138,8 +138,8 @@ paths:
 
     post:
       tags: [Items]
-      summary: Create an item
-      description: Create a new item. Only `contributor` role may create items. The item is associated with the authenticated contributor.
+      summary: Add an item
+      description: Add a new item to the catalogue. Only `contributor` role may add items. The item is associated with the authenticated contributor.
       operationId: createItem
       security:
         - bearerAuth: []
@@ -187,8 +187,8 @@ paths:
 
     patch:
       tags: [Items]
-      summary: Update an item
-      description: Partially update an item. Only the `contributor` who created the item may update it.
+      summary: Edit an item
+      description: Partially edit an item. Only the `contributor` who added the item may edit it.
       operationId: updateItem
       security:
         - bearerAuth: []
@@ -218,8 +218,8 @@ paths:
 
     delete:
       tags: [Items]
-      summary: Delete an item
-      description: Delete an item. Only the `contributor` who created the item may delete it.
+      summary: Remove an item
+      description: Remove an item from the catalogue. Only the `contributor` who added the item may remove it.
       operationId: deleteItem
       security:
         - bearerAuth: []

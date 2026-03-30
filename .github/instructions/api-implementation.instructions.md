@@ -31,3 +31,7 @@ Route paths, HTTP methods, request bodies, query parameters, and response schema
 ## Tests
 
 Each route file has a corresponding test file in `api/tests/`. Tests should cover the access control rules from `docs/specs/auth-matrix.md` — use helpers from `api/tests/helpers.js`.
+
+## Business language
+
+Prefer business language over CRUD terminology everywhere it appears in human-readable contexts — descriptions, comments, test labels, error messages, and spec documents. Use the language of the domain (e.g. "add", "edit", "remove", "archive") rather than generic database operations ("create", "update", "delete"). HTTP methods (POST/PATCH/DELETE) and technical identifiers (`operationId`, `store.items.delete()`) can keep their technical names.

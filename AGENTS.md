@@ -13,6 +13,7 @@
 4. **Auth matrix is authoritative for access control.** All authorization logic in `api/middleware/` and route handlers must match `docs/specifications/auth-matrix.md` exactly.
 5. **OpenAPI contract is authoritative for the REST API.** Request/response shapes, status codes, and route paths must match `docs/specifications/contracts/openapi.yaml`.
 6. **Task-first rule.** Always run `task` to discover available tasks before running any raw commands. If no task exists for an operation, add one before running it.
+7. **Business language over CRUD.** Use domain verbs in specs, user stories, descriptions, and comments. Prefer "add / edit / remove / archive" over "create / update / delete" in any human-readable context.
 
 ---
 

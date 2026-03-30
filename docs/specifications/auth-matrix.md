@@ -9,7 +9,7 @@
 
 | Role | Description |
 |------|-------------|
-| `contributor` | Can create items and update/delete their own items |
+| `contributor` | Can add items and edit/remove their own items |
 | `viewer` | Read-only access to items |
 
 ## Authentication
@@ -28,10 +28,10 @@ Tokens are issued via `POST /v1/auth/login` and refreshed via `POST /v1/auth/ref
 | Refresh token | `POST /v1/auth/refresh` | 🌐 | 🌐 | 🌐 |
 | Logout | `POST /v1/auth/logout` | ❌ | ✅ | ✅ |
 | List items | `GET /v1/items` | ❌ | ✅ | ✅ |
-| Create item | `POST /v1/items` | ❌ | ✅ | ❌ |
-| Get item | `GET /v1/items/{itemId}` | ❌ | ✅ | ✅ |
-| Update item | `PATCH /v1/items/{itemId}` | ❌ | ✅ own | ❌ |
-| Delete item | `DELETE /v1/items/{itemId}` | ❌ | ✅ own | ❌ |
+| Add item | `POST /v1/items` | ❌ | ✅ | ❌ |
+| View item | `GET /v1/items/{itemId}` | ❌ | ✅ | ✅ |
+| Edit item | `PATCH /v1/items/{itemId}` | ❌ | ✅ own | ❌ |
+| Remove item | `DELETE /v1/items/{itemId}` | ❌ | ✅ own | ❌ |
 
 Legend:
 - 🌐 Public (no auth required)
@@ -41,7 +41,7 @@ Legend:
 
 ## Ownership Rule
 
-A `contributor` may only update or delete items where `item.contributorId` matches their user ID (`req.user.sub`). Attempting to modify another contributor's item returns `403 Forbidden`.
+A `contributor` may only edit or remove items where `item.contributorId` matches their user ID (`req.user.sub`). Attempting to modify another contributor's item returns `403 Forbidden`.
 
 ## Error Responses
 
