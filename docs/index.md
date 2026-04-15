@@ -18,8 +18,9 @@ All authoritative business requirements live in `docs/specifications/`.
 | [Sequence Diagrams](specifications/sequence-diagrams.md) | Key interaction flows (Mermaid) |
 | [**Interactive API Reference →**](specifications/api-reference.html) | OpenAPI 3.0.3 contract — live try-it-out |
 | [**AsyncAPI Event Reference →**](specifications/asyncapi-reference.html) | Domain event catalogue — CloudEvents schemas |
+| [Data Contract](specifications/contracts/datacontract.yaml) | ODCS 3.1 data contract — historical event payload schema |
 
-Raw contract files: [`specifications/contracts/openapi.yaml`](specifications/contracts/openapi.yaml) · [`specifications/contracts/asyncapi.yaml`](specifications/contracts/asyncapi.yaml)
+Raw contract files: [`specifications/contracts/openapi.yaml`](specifications/contracts/openapi.yaml) · [`specifications/contracts/asyncapi.yaml`](specifications/contracts/asyncapi.yaml) · [`specifications/contracts/datacontract.yaml`](specifications/contracts/datacontract.yaml)
 
 ---
 
@@ -33,7 +34,8 @@ task                # list all available tasks
 task api:install    # install npm dependencies
 task api:dev        # start dev server on http://localhost:3000
 task api:test       # run all tests
-task lint           # lint OpenAPI + AsyncAPI contracts
+task lint           # lint OpenAPI + AsyncAPI + data contract
+task lint:datacontract  # lint ODCS data contract only
 task domain:check   # lint + test in one step
 task domain:init    # seed blank spec templates into docs/specifications/
 task api:demo       # run the full end-to-end demo
@@ -86,7 +88,7 @@ Replace it entirely when you instantiate the template for a real domain.
 1. Create a new repo from this template (**Use this template** on GitHub)
 2. `task api:install`
 3. `task domain:init` — copies blank spec templates into `docs/specifications/`
-4. Fill in each spec file (start with `prd.md`, then `domain-model.md`, `auth-matrix.md`, `sequence-diagrams.md`, finally the contracts)
+4. Fill in each spec file (start with `prd.md`, then `domain-model.md`, `auth-matrix.md`, `sequence-diagrams.md`, finally the contracts: `openapi.yaml`, `asyncapi.yaml`, `datacontract.yaml`)
 5. Update `api/src/store.js` with your domain's entities
 6. Replace `api/src/routes/` and `api/tests/` with your domain's routes and tests
 7. `task domain:check` — all green ✓
