@@ -34,6 +34,7 @@ See [`docs/index.md`](docs/index.md) for the full architecture overview, task re
 - [ ] Fill in `docs/specifications/sequence-diagrams.md`
 - [ ] Fill in `docs/specifications/contracts/openapi.yaml`
 - [ ] Fill in `docs/specifications/contracts/asyncapi.yaml`
+- [ ] Fill in `docs/specifications/contracts/datacontract.yaml`
 - [ ] Update `api/src/store.js` with domain entities
 - [ ] Replace `api/src/routes/` with domain routes
 - [ ] Replace `api/tests/` with domain tests

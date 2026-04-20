@@ -12,8 +12,10 @@
 3. **Domain model is authoritative for naming.** Entity names, attribute names, and relationship names defined in `docs/specifications/domain-model.md` must be used consistently in code (routes, store, tests, variables).
 4. **Auth matrix is authoritative for access control.** All authorization logic in `api/middleware/` and route handlers must match `docs/specifications/auth-matrix.md` exactly.
 5. **OpenAPI contract is authoritative for the REST API.** Request/response shapes, status codes, and route paths must match `docs/specifications/contracts/openapi.yaml`.
-6. **Task-first rule.** Always run `task` to discover available tasks before running any raw commands. If no task exists for an operation, add one before running it.
-7. **Business language over CRUD.** Use domain verbs in specs, user stories, descriptions, and comments. Prefer "add / edit / remove / archive" over "create / update / delete" in any human-readable context.
+6. **AsyncAPI contract is authoritative for domain events.** Event channel names, message schemas, and CloudEvents attributes must match `docs/specifications/contracts/asyncapi.yaml`.
+7. **Data contract is authoritative for historical event payload schema.** Field names, types, and constraints must match `docs/specifications/contracts/datacontract.yaml`.
+8. **Task-first rule.** Always run `task` to discover available tasks before running any raw commands. If no task exists for an operation, add one before running it.
+9. **Business language over CRUD.** Use domain verbs in specs, user stories, descriptions, and comments. Prefer "add / edit / remove / archive" over "create / update / delete" in any human-readable context.
 
 ---
 

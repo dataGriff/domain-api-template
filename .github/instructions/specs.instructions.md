@@ -22,7 +22,8 @@ Files in `docs/specifications/` are **authoritative business requirements**. The
 | `specifications/auth-matrix.md` | Which roles may perform which operations — all access control logic must match this exactly |
 | `specifications/sequence-diagrams.md` | Interaction flows — the expected order of API calls and system events |
 | `specifications/contracts/openapi.yaml` | REST API shapes, status codes, route paths — route handlers must conform to this |
-| `specifications/contracts/asyncapi.yaml` | Domain event schemas and channel bindings |
+| `specifications/contracts/asyncapi.yaml` | Domain event schemas and channel bindings — event publishers must conform to this |
+| `specifications/contracts/datacontract.yaml` | ODCS 3.1 data contract — historical event payload field names, types, and constraints |
 
 ## When asked to update a spec
 
