@@ -53,11 +53,17 @@ tasks:
     cmds:
       - spectral lint docs/specifications/contracts/asyncapi.yaml --ruleset .spectral-asyncapi.yaml
 
+  lint:datacontract:
+    desc: Lint the ODCS data contract with datacontract-cli
+    cmds:
+      - datacontract lint docs/specifications/contracts/datacontract.yaml
+
   lint:
-    desc: Run all linting (OpenAPI + AsyncAPI)
+    desc: Run all linting (OpenAPI + AsyncAPI + data contract)
     cmds:
       - task: lint:openapi
       - task: lint:asyncapi
+      - task: lint:datacontract
 
   docs:serve:
     desc: Serve the MkDocs site locally
@@ -114,7 +120,7 @@ tasks:
         echo "Then run: task domain:check"
 
   domain:check:
-    desc: Validate the domain — runs lint (OpenAPI + AsyncAPI) and all API tests
+    desc: Validate the domain — runs lint (OpenAPI + AsyncAPI + data contract) and all API tests
     cmds:
       - task: lint
       - task: api:test
