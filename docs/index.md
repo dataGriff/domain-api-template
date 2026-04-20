@@ -65,8 +65,10 @@ task docs:serve     # serve this documentation site locally
 3. **Domain model is authoritative for naming.** Entity and attribute names defined here must be used consistently across routes, tests, and store.
 4. **Auth matrix is authoritative for access control.** All route and middleware logic must match it exactly.
 5. **OpenAPI contract is authoritative for the REST API.** Paths, methods, request/response shapes, and status codes must match.
-6. **Task-first.** Run `task` to discover commands. If no task exists for an operation, add one before running it.
-7. **Business language over CRUD.** Use domain verbs in specs, user stories, descriptions, and comments. Prefer "add / edit / remove / archive" over "create / update / delete" in any human-readable context. HTTP methods and technical identifiers keep their technical names.
+6. **AsyncAPI contract is authoritative for domain events.** Event channel names, message schemas, and CloudEvents attributes must match `docs/specifications/contracts/asyncapi.yaml`.
+7. **Data contract is authoritative for historical event payload schema.** Field names, types, and constraints in `docs/specifications/contracts/datacontract.yaml` must match the published event payloads.
+8. **Task-first.** Run `task` to discover commands. If no task exists for an operation, add one before running it.
+9. **Business language over CRUD.** Use domain verbs in specs, user stories, descriptions, and comments. Prefer "add / edit / remove / archive" over "create / update / delete" in any human-readable context. HTTP methods and technical identifiers keep their technical names.
 
 ---
 

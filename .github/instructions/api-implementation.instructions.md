@@ -15,6 +15,8 @@ Before writing or modifying any code in `api/`, check the relevant spec document
 | Access control, role restrictions, authentication requirements | [`docs/specifications/auth-matrix.md`](../../docs/specifications/auth-matrix.md) |
 | Entity names, field names, relationships, business rules | [`docs/specifications/domain-model.md`](../../docs/specifications/domain-model.md) |
 | Interaction ordering, preconditions, side effects | [`docs/specifications/sequence-diagrams.md`](../../docs/specifications/sequence-diagrams.md) |
+| Domain event channel names, message schemas, CloudEvents attributes | [`docs/specifications/contracts/asyncapi.yaml`](../../docs/specifications/contracts/asyncapi.yaml) |
+| Historical event payload field names, types, and constraints | [`docs/specifications/contracts/datacontract.yaml`](../../docs/specifications/contracts/datacontract.yaml) |
 
 ## Naming
 
