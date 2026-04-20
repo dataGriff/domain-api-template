@@ -27,6 +27,13 @@ jobs:
       - name: Install Spectral
         run: npm install -g @stoplight/spectral-cli
 
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Install datacontract-cli
+        run: pip install datacontract-cli
+
       - name: Lint contracts
         run: task lint
 
