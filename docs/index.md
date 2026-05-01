@@ -16,6 +16,7 @@ All authoritative business requirements live in `docs/specifications/`.
 | [Domain Model](specifications/domain-model.md) | Entities, attributes, relationships, business rules |
 | [Auth Matrix](specifications/auth-matrix.md) | Roles and which operations each role may perform |
 | [Sequence Diagrams](specifications/sequence-diagrams.md) | Key interaction flows (Mermaid) |
+| [**Domain Overview →**](specifications/domain-overview.html) | Auto-generated: operations, events, entities, ER diagram and data contract in one page |
 | [**Interactive API Reference →**](specifications/api-reference.html) | OpenAPI 3.0.3 contract — live try-it-out |
 | [**AsyncAPI Event Reference →**](specifications/asyncapi-reference.html) | Domain event catalogue — CloudEvents schemas |
 | [Data Contract](specifications/contracts/datacontract.yaml) | ODCS 3.1 data contract — historical event payload schema |
@@ -38,6 +39,7 @@ task lint           # lint OpenAPI + AsyncAPI + data contract
 task lint:datacontract  # lint ODCS data contract only
 task domain:check   # lint + test in one step
 task domain:init    # seed blank spec templates into docs/specifications/
+task docs:generate  # (re)generate the domain overview HTML page from specs
 task api:demo       # run the full end-to-end demo
 task docs:serve     # serve this documentation site locally
 ```
