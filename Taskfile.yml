@@ -65,19 +65,26 @@ tasks:
       - task: lint:asyncapi
       - task: lint:datacontract
 
+  docs:generate:
+    desc: Generate the domain overview HTML page from OpenAPI, AsyncAPI, and Data Contract specs
+    cmds:
+      - python3 scripts/generate_domain_overview.py
+
   docs:serve:
     desc: Serve the MkDocs site locally
     cmds:
       - mkdocs serve
 
   docs:build:
-    desc: Build the MkDocs site
+    desc: Build the MkDocs site (regenerates domain overview first)
     cmds:
+      - task: docs:generate
       - mkdocs build
 
   docs:deploy:
-    desc: Deploy docs to GitHub Pages
+    desc: Deploy docs to GitHub Pages (regenerates domain overview first)
     cmds:
+      - task: docs:generate
       - mkdocs gh-deploy --force
 
   domain:init:

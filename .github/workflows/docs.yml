@@ -52,7 +52,10 @@ jobs:
           python-version: "3.x"
 
       - name: Install dependencies
-        run: pip install mkdocs-material
+        run: pip install mkdocs-material pyyaml
+
+      - name: Generate domain overview
+        run: task docs:generate
 
       - name: Deploy to GitHub Pages
         run: task docs:deploy
