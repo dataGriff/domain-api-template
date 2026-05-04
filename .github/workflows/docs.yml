@@ -32,7 +32,7 @@ jobs:
           python-version: "3.11"
 
       - name: Install datacontract-cli
-        run: pip install 'datacontract-cli[all]'
+        run: pip install datacontract-cli
 
       - name: Lint contracts
         run: task lint
