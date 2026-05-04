@@ -126,6 +126,20 @@ tasks:
         echo "Done. Edit the files in $TARGET_DIR to describe your domain."
         echo "Then run: task domain:check"
 
+  setup:
+    desc: Install all tooling and dependencies (run once after cloning — requires mise)
+    cmds:
+      - mise install
+      - pip install pyyaml
+      - task: api:install
+      - task: hooks:install
+
+  hooks:install:
+    desc: Install git hooks from .githooks/ (run once after cloning)
+    cmds:
+      - git config core.hooksPath .githooks
+      - echo "Git hooks installed from .githooks/"
+
   domain:check:
     desc: Validate the domain — runs lint (OpenAPI + AsyncAPI + data contract) and all API tests
     cmds:

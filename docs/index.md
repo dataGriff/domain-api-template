@@ -96,4 +96,4 @@ Replace it entirely when you instantiate the template for a real domain.
 5. Update `api/src/store.js` with your domain's entities
 6. Replace `api/src/routes/` and `api/tests/` with your domain's routes and tests
 7. `task domain:check` — all green ✓
-8. Update `README.md`, `AGENTS.md`, and this file (`docs/index.md`) for your domain
+8. Update `README.md` and this file (`docs/index.md`) for your domain — this file is the canonical source of principles, architecture, and commands for both humans and agents. `AGENTS.md` is a thin navigation shell that points here and does not need domain-specific content.

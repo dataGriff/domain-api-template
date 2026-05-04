@@ -1,0 +1,35 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(task *)",
+      "Bash(npm ci)",
+      "Bash(npm ci *)",
+      "Bash(npm test)",
+      "Bash(npm test *)",
+      "Bash(npm run *)",
+      "Bash(npm install)",
+      "Bash(grep *)",
+      "Bash(find *)",
+      "Bash(git status*)",
+      "Bash(git log*)",
+      "Bash(git diff*)",
+      "Bash(git show*)",
+      "Bash(ls*)",
+      "Bash(cat *)"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq -r '.tool_input.file_path // \"\"' | { read -r f; echo \"$f\" | grep -q 'docs/specifications/contracts/' && task lint || true; } 2>/dev/null || true",
+            "statusMessage": "Linting spec contracts..."
+          }
+        ]
+      }
+    ]
+  }
+}

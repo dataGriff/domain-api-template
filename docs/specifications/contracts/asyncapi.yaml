@@ -13,7 +13,11 @@ info:
     and are published over AMQP.
   contact:
     name: Domain API Template
+    url: https://github.com/dataGriff/domain-api-template
     email: template@example.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
 
 servers:
   development:
