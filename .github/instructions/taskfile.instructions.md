@@ -1,29 +1,26 @@
 ---
-description: "Use when reading, writing, or adding tasks to Taskfile.yml or Taskfile.api.yml. Covers naming conventions, structure, when to add a new task, and how to avoid duplicate or ad-hoc commands."
+description: "Use when reading, writing, or adding tasks to Taskfile.yml. Covers naming conventions, structure, when to add a new task, and how to avoid duplicate or ad-hoc commands."
 applyTo: "Taskfile*.yml"
 ---
 
 # Taskfile Conventions
 
-## Taskfile locations
+## Taskfile location
 
 | File | Contains |
 |------|----------|
-| `Taskfile.yml` | Project-wide tasks: lint, docs, top-level `api:*` shortcuts that delegate to `Taskfile.api.yml` |
-| `Taskfile.api.yml` | All API-specific tasks: server, auth, resources, demo workflow, state management |
-
-New tasks belong in `Taskfile.api.yml` unless they are project-wide (linting, docs, CI helpers).
+| `Taskfile.yml` | Project-wide tasks for contract linting, docs generation, docs publishing, and bootstrap |
 
 ## Naming convention
 
-Follow the existing `namespace:resource:action` pattern:
+Follow the existing `namespace:action` pattern:
 
 ```
-api:items:list          # list all items
-api:items:get           # get a single item
-api:items:create        # create an item
-api:items:update        # update an item
-api:auth:register:contributor
+lint:openapi
+lint:asyncapi
+lint:datacontract
+docs:generate
+domain:init
 ```
 
 - Namespaces are lowercase, hyphen-separated (`line-items`, not `lineItems`)
@@ -44,34 +41,11 @@ my:new:task:
 ## When to add a new task
 
 Add a task whenever you would otherwise run a raw CLI command during development, CI, or demos:
-- A new API endpoint needs to be exercised manually → add `api:<resource>:<action>`
-- A new build step is introduced → add it to `Taskfile.yml`
+- A new contract quality check is introduced → add it to `Taskfile.yml`
+- A docs build or publish step is introduced → add it to `Taskfile.yml`
 - A script or tool is run more than once → it belongs in a task
 
 **Do not** run raw `curl`, `npm`, `spectral`, `mkdocs`, or other CLI commands directly. Add a task first.
-
-## State management (demo tasks)
-
-Demo tasks that carry output to later steps use `.demo-state` as a key-value store:
-
-```yaml
-vars:
-  STATE: .demo-state  # defined at the top of Taskfile.api.yml
-
-# Reading a saved value:
-vars:
-  MY_ID:
-    sh: grep '^MY_ID=' {{.STATE}} 2>/dev/null | cut -d= -f2-
-
-# Writing a saved value:
-cmds:
-  - |
-    grep -v "^MY_ID=" {{.STATE}} > {{.STATE}}.tmp 2>/dev/null || true
-    echo "MY_ID=$VALUE" >> {{.STATE}}.tmp
-    mv {{.STATE}}.tmp {{.STATE}}
-```
-
-Use `task api:state:clear` to reset state between demo runs.
 
 ## Checking for duplicates before adding
 

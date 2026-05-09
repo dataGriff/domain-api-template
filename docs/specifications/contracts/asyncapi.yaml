@@ -5,8 +5,8 @@ info:
   description: |
     Domain event contract for the **Items** example domain.
 
-    This is a deliberately simple domain included as a working reference
-    implementation of the Domain API Template. Replace this file with
+    This is a deliberately simple domain included as a reference
+    contract set in the Domain API Template. Replace this file with
     your own domain's event contract.
 
     All events follow the [CloudEvents 1.0](https://cloudevents.io/) specification
