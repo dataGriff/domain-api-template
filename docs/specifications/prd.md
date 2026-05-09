@@ -1,6 +1,6 @@
 # Product Requirements Document — Items
 
-> **Example domain.** This is the working reference implementation included with the Domain API Template.
+> **Example domain.** This is the reference requirements set included with the Domain API Template.
 > It is intentionally simple. Replace the contents of `docs/specifications/` with your own domain
 > by running `task domain:init` and editing the generated files.
 
@@ -32,7 +32,7 @@ A user who can browse the item catalogue but cannot make changes.
 
 ## Goals
 
-1. Provide a minimal, running API example that demonstrates authentication, role-based access control, item lifecycle management, and pagination.
+1. Provide a minimal API contract example that demonstrates authentication, role-based access control, item lifecycle management, and pagination.
 2. Keep the example simple enough that any developer can grasp the full domain in under 5 minutes.
 3. Show — not just describe — the template patterns so they are easy to replicate in a new domain.
 
@@ -126,10 +126,10 @@ A user who can browse the item catalogue but cannot make changes.
 
 1. In-memory store only (no database).
 2. No real business domain — items are intentionally generic.
-3. JavaScript (Node.js/Express) only.
+3. Implementation-agnostic (no runtime or framework locked in this repository).
 
 ## Success Metrics
 
-1. All tests pass — `task api:test`.
-2. OpenAPI and AsyncAPI lint cleanly — `task lint`.
+1. Contracts lint cleanly — `task lint`.
+2. Domain overview regenerates from contracts — `task docs:generate`.
 3. A new developer can understand the full domain in under 5 minutes.

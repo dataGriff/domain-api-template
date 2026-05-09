@@ -1,6 +1,6 @@
 # Domain Model — Items
 
-> **Example domain.** This is the working reference implementation included with the Domain API Template.
+> **Example domain.** This is the reference domain model included with the Domain API Template.
 > Replace this file with your own domain model by running `task domain:init`.
 
 ---

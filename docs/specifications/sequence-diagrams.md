@@ -1,6 +1,6 @@
 # Sequence Diagrams — Items
 
-> **Example domain.** This is the working reference implementation included with the Domain API Template.
+> **Example domain.** This is the reference interaction flow set included with the Domain API Template.
 > Replace this file with your own sequence diagrams by running `task domain:init`.
 
 ---

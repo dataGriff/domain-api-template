@@ -34,18 +34,10 @@ Edit the files in `docs/specifications/` in this recommended order:
 5. **`contracts/openapi.yaml`** — Define the REST API contract. Must match domain model + auth matrix.
 6. **`contracts/asyncapi.yaml`** — Define domain events. Derive from state transitions in domain model.
 
-### Step 3: Implement the API
-
-With specs complete, implement the API to match:
-
-- `api/src/store.js` — Replace example entities with your domain's entities
-- `api/src/routes/` — Replace example routes with routes matching your OpenAPI spec
-- `api/tests/` — Replace example tests with tests for your routes and auth matrix
-
-### Step 4: Validate
+### Step 3: Validate
 
 ```bash
-task domain:check   # lint contracts + run all tests
+task domain:check   # lint contracts + regenerate domain overview docs
 ```
 
 ## Key Rules During Bootstrap
@@ -58,30 +50,21 @@ task domain:check   # lint contracts + run all tests
 
 ## What to Keep vs Replace
 
-### Keep (template engine — do not change unless there is a clear reason):
-- `api/src/app.js` — Express app setup (CORS, rate limiting, OpenAPI validation middleware)
-- `api/src/auth.js` — JWT signing/verification utilities
-- `api/src/middleware/authenticate.js` — JWT middleware and `requireRole` helper
-- `api/src/middleware/errorHandler.js` — Centralised error handler
-- `api/tests/helpers.js` — Token and store seeding helpers (extend, don't replace)
-- `Taskfile.yml` — Project-wide tasks (add domain tasks here)
-- `Taskfile.api.yml` — API-specific tasks (add resource tasks here)
+### Keep (design and contract source — do not change unless there is a clear reason):
+- `Taskfile.yml` — project-wide tasks for linting and docs
 - `.spectral-openapi.yaml`, `.spectral-asyncapi.yaml` — Linting rulesets
 - `.github/` — CI workflows and Copilot instructions
+- `.github/instructions/api-implementation.instructions.md` — reusable implementation conformance guide for the instantiated repository
 
 ### Replace (domain pack — this is what changes per project):
 - `docs/specifications/` — All spec files (use `task domain:init` to start)
-- `api/src/store.js` — Domain-specific in-memory entities
-- `api/src/routes/` — Domain-specific route handlers
-- `api/tests/*.test.js` (except `helpers.js`) — Domain-specific tests
 - `README.md` — Project description
 - `AGENTS.md` — Project-specific AI guidelines
 - `docs/index.md` — Docs homepage
 - `mkdocs.yml` — Site name, URL, repo name
-- `api/package.json` — Package name and description
 
 ## When Working on Specs vs Code
 
 - If asked to **change a spec file**: confirm this is a deliberate business decision. Spec changes ripple into code — do them intentionally.
-- If asked to **change code that conflicts with a spec**: fix the code, not the spec. The spec wins.
-- If **code and spec are both wrong**: flag it. Do not silently "fix" specs to match bad code.
+- If asked to **change implementation details**: keep runtime/framework code out of this repository and update design/contracts plus reusable implementation guidance when needed.
+- If **spec and implementation in the instantiated repository disagree**: update implementation in that repo, not here.

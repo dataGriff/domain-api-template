@@ -1,6 +1,6 @@
 # Auth Matrix — Items
 
-> **Example domain.** This is the working reference implementation included with the Domain API Template.
+> **Example domain.** This is the reference auth matrix included with the Domain API Template.
 > Replace this file with your own auth matrix by running `task domain:init`.
 
 ---

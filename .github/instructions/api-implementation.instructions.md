@@ -1,39 +1,28 @@
 ---
-description: "Use when writing, editing, or reviewing API code, routes, middleware, tests, or store logic. Ensures implementation conforms to the authoritative business specifications in docs/specs/."
-applyTo: "api/**"
+description: "Use when mapping these specs/contracts into a real implementation repository. Keeps implementations consistent without prescribing a language, framework, or runtime."
+applyTo: "**"
 ---
 
-# API Implementation — Spec Conformance Rules
+# API Implementation — Contract Conformance Guide
 
-Before writing or modifying any code in `api/`, check the relevant spec documents. Specs always win.
+This template repository does not contain runnable implementation code.  
+When this template is instantiated, this guidance applies to that repository and helps implement these contracts consistently.
 
-## Mandatory checks before implementing
+## Required conformance checks
 
-| What you're changing | Check this spec first |
-|---------------------|-----------------------|
-| Route path, method, request/response shape, status code | [`docs/specifications/contracts/openapi.yaml`](../../docs/specifications/contracts/openapi.yaml) |
-| Access control, role restrictions, authentication requirements | [`docs/specifications/auth-matrix.md`](../../docs/specifications/auth-matrix.md) |
-| Entity names, field names, relationships, business rules | [`docs/specifications/domain-model.md`](../../docs/specifications/domain-model.md) |
-| Interaction ordering, preconditions, side effects | [`docs/specifications/sequence-diagrams.md`](../../docs/specifications/sequence-diagrams.md) |
-| Domain event channel names, message schemas, CloudEvents attributes | [`docs/specifications/contracts/asyncapi.yaml`](../../docs/specifications/contracts/asyncapi.yaml) |
-| Historical event payload field names, types, and constraints | [`docs/specifications/contracts/datacontract.yaml`](../../docs/specifications/contracts/datacontract.yaml) |
+| Implementation concern | Authoritative source in the repository using this template |
+|------------------------|-----------------------------------|
+| Route paths, HTTP methods, request/response shapes, status codes | `docs/specifications/contracts/openapi.yaml` |
+| Roles, auth rules, and operation permissions | `docs/specifications/auth-matrix.md` |
+| Entity names, attributes, relationships, and invariants | `docs/specifications/domain-model.md` |
+| Flow order, preconditions, and side effects | `docs/specifications/sequence-diagrams.md` |
+| Domain event channels and message schemas | `docs/specifications/contracts/asyncapi.yaml` |
+| Historical event payload schema and constraints | `docs/specifications/contracts/datacontract.yaml` |
 
-## Naming
+## Principles for implementation repositories
 
-All entity names, attribute names, and relationship names must exactly match `docs/specs/domain-model.md`. Do not invent synonyms or rename things (e.g. use the exact entity name from the domain model, not an alias).
-
-## Access control
-
-Every route's authentication and role checks must exactly match `docs/specs/auth-matrix.md`. The middleware is in `api/src/middleware/authenticate.js`. Never widen access beyond what the matrix permits.
-
-## REST contract
-
-Route paths, HTTP methods, request bodies, query parameters, and response schemas must match `docs/specs/contracts/openapi.yaml`. Do not add or remove fields without a corresponding spec change.
-
-## Tests
-
-Each route file has a corresponding test file in `api/tests/`. Tests should cover the access control rules from `docs/specs/auth-matrix.md` — use helpers from `api/tests/helpers.js`.
-
-## Business language
-
-Prefer business language over CRUD terminology everywhere it appears in human-readable contexts — descriptions, comments, test labels, error messages, and spec documents. Use the language of the domain (e.g. "add", "edit", "remove", "archive") rather than generic database operations ("create", "update", "delete"). HTTP methods (POST/PATCH/DELETE) and technical identifiers (`operationId`, `store.items.delete()`) can keep their technical names.
+1. **Specs are the source of truth.** If implementation and spec diverge, fix implementation first.
+2. **Do not add undocumented behavior.** Any new endpoint, event, or payload field requires an intentional spec update.
+3. **Keep names exact.** Reuse entity and field names from the domain model and contracts; avoid synonyms.
+4. **Keep access control exact.** Permission checks in code must match the auth matrix.
+5. **Be implementation-agnostic in this repo.** Store requirements and guidance here; keep runtime/framework-specific code elsewhere.

@@ -4,8 +4,8 @@ info:
   description: |
     Example domain API for the **Domain API Template**.
 
-    This is a deliberately simple "Items" domain included as a working reference
-    implementation. It demonstrates the full template pattern:
+    This is a deliberately simple "Items" domain included as a reference
+    contract set. It demonstrates the full template pattern:
 
     - JWT-based authentication with two roles (`contributor`, `viewer`)
     - Role-based access control (RBAC)

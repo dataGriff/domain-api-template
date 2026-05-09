@@ -1,7 +1,6 @@
 # Domain API Template
 
-A spec-driven, contract-first REST API template for Node.js/Express.
-Write your specs first — then implement. The **Items** example domain shows every pattern in action.
+A design-and-contracts-only workspace for long-lived domain requirements, rules, and contracts.
 
 ---
 
@@ -27,36 +26,18 @@ Raw contract files: [`specifications/contracts/openapi.yaml`](specifications/con
 
 ## Tasks
 
-All automation is in `Taskfile.yml` (project-wide) and `Taskfile.api.yml` (API-specific).
-Always use `task` — never run raw `npm`, `curl`, or `spectral` directly.
+All automation is in `Taskfile.yml`.
+Always use `task`.
 
 ```bash
 task                # list all available tasks
-task api:install    # install npm dependencies
-task api:dev        # start dev server on http://localhost:3000
-task api:test       # run all tests
 task lint           # lint OpenAPI + AsyncAPI + data contract
 task lint:datacontract  # lint ODCS data contract only
-task domain:check   # lint + test in one step
+task domain:check   # lint + regenerate domain overview
 task domain:init    # seed blank spec templates into docs/specifications/
 task docs:generate  # (re)generate the domain overview HTML page from specs
-task api:demo       # run the full end-to-end demo
 task docs:serve     # serve this documentation site locally
 ```
-
----
-
-## Architecture
-
-| Layer | Location | Description |
-|-------|----------|-------------|
-| Entry point | `api/src/server.js` | Starts the Express server |
-| App config | `api/src/app.js` | CORS, rate limiting, OpenAPI validation middleware |
-| Auth | `api/src/auth.js` · `api/src/middleware/authenticate.js` | JWT signing/verification and `requireRole` helper |
-| Routes | `api/src/routes/` | One file per resource |
-| Store | `api/src/store.js` | In-memory store (no database) |
-| Error handling | `api/src/middleware/errorHandler.js` | Centralised error handler |
-| Tests | `api/tests/` | Per-route integration tests using `api/tests/helpers.js` |
 
 ---
 
@@ -64,36 +45,21 @@ task docs:serve     # serve this documentation site locally
 
 1. **Specs drive code.** If code and spec disagree, fix the code — not the spec.
 2. **Do not edit `docs/specifications/` incidentally.** Spec changes are deliberate business decisions.
-3. **Domain model is authoritative for naming.** Entity and attribute names defined here must be used consistently across routes, tests, and store.
-4. **Auth matrix is authoritative for access control.** All route and middleware logic must match it exactly.
+3. **Domain model is authoritative for naming.** Entity and attribute names defined here must be used consistently across implementations.
+4. **Auth matrix is authoritative for access control.** Implementation access logic must match it exactly.
 5. **OpenAPI contract is authoritative for the REST API.** Paths, methods, request/response shapes, and status codes must match.
 6. **AsyncAPI contract is authoritative for domain events.** Event channel names, message schemas, and CloudEvents attributes must match `docs/specifications/contracts/asyncapi.yaml`.
 7. **Data contract is authoritative for historical event payload schema.** Field names, types, and constraints in `docs/specifications/contracts/datacontract.yaml` must match the published event payloads.
 8. **Task-first.** Run `task` to discover commands. If no task exists for an operation, add one before running it.
 9. **Business language over CRUD.** Use domain verbs in specs, user stories, descriptions, and comments. Prefer "add / edit / remove / archive" over "create / update / delete" in any human-readable context. HTTP methods and technical identifiers keep their technical names.
-
----
-
-## Example Domain: Items
-
-The included example is a minimal **Items catalogue** — two roles and one resource — generic enough to learn from without domain noise:
-
-- **2 roles**: `contributor` (add/edit/remove own items) · `viewer` (read-only)
-- **1 resource**: `items` (id, name, description, status, contributorId, createdAt, updatedAt)
-- Authentication: register, login, refresh token, logout (JWT)
-
-This example demonstrates auth, RBAC, item lifecycle, ownership rules, pagination, and domain events end-to-end.
-Replace it entirely when you instantiate the template for a real domain.
+10. **Implementation guidance is reusable and technology-agnostic.** Use `.github/instructions/api-implementation.instructions.md` to implement these contracts consistently once this template is instantiated, without prescribing a framework/runtime.
 
 ---
 
 ## Bootstrap a New Domain
 
 1. Create a new repo from this template (**Use this template** on GitHub)
-2. `task api:install`
-3. `task domain:init` — copies blank spec templates into `docs/specifications/`
-4. Fill in each spec file (start with `prd.md`, then `domain-model.md`, `auth-matrix.md`, `sequence-diagrams.md`, finally the contracts: `openapi.yaml`, `asyncapi.yaml`, `datacontract.yaml`)
-5. Update `api/src/store.js` with your domain's entities
-6. Replace `api/src/routes/` and `api/tests/` with your domain's routes and tests
-7. `task domain:check` — all green ✓
-8. Update `README.md` and this file (`docs/index.md`) for your domain — this file is the canonical source of principles, architecture, and commands for both humans and agents. `AGENTS.md` is a thin navigation shell that points here and does not need domain-specific content.
+2. `task domain:init` — copies blank spec templates into `docs/specifications/`
+3. Fill in each spec file (start with `prd.md`, then `domain-model.md`, `auth-matrix.md`, `sequence-diagrams.md`, finally the contracts: `openapi.yaml`, `asyncapi.yaml`, `datacontract.yaml`)
+4. `task domain:check` — ensure contracts lint and docs regenerate successfully
+5. Update `README.md` and this file (`docs/index.md`) for your domain context
