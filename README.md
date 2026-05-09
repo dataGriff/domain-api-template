@@ -38,5 +38,6 @@ This repository intentionally contains no runnable API implementation. It is the
 - event contracts
 - data contracts
 
-Implementations should live in separate repositories that consume these specs and contracts.
-Use the implementation guidance in `.github/instructions/api-implementation.instructions.md` to keep those implementations consistent while remaining technology-agnostic.
+Implementations should live in separate repositories that consume this template.
+When instantiated, these specs and instructions become the source of truth for that repository's implementation.
+Use `.github/instructions/api-implementation.instructions.md` to keep implementation conformance consistent while remaining technology-agnostic.

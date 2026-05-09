@@ -5,12 +5,12 @@ applyTo: "**"
 
 # API Implementation — Contract Conformance Guide
 
-This repository does not contain runnable implementation code.  
-It does contain the long-lived guidance for implementing these contracts consistently in downstream repositories.
+This template repository does not contain runnable implementation code.  
+When this template is instantiated, this guidance applies to that repository and helps implement these contracts consistently.
 
 ## Required conformance checks
 
-| Implementation concern | Authoritative source in this repo |
+| Implementation concern | Authoritative source in the repository using this template |
 |------------------------|-----------------------------------|
 | Route paths, HTTP methods, request/response shapes, status codes | `docs/specifications/contracts/openapi.yaml` |
 | Roles, auth rules, and operation permissions | `docs/specifications/auth-matrix.md` |
@@ -19,7 +19,7 @@ It does contain the long-lived guidance for implementing these contracts consist
 | Domain event channels and message schemas | `docs/specifications/contracts/asyncapi.yaml` |
 | Historical event payload schema and constraints | `docs/specifications/contracts/datacontract.yaml` |
 
-## Principles for downstream implementations
+## Principles for implementation repositories
 
 1. **Specs are the source of truth.** If implementation and spec diverge, fix implementation first.
 2. **Do not add undocumented behavior.** Any new endpoint, event, or payload field requires an intentional spec update.
