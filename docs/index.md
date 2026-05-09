@@ -52,6 +52,7 @@ task docs:serve     # serve this documentation site locally
 7. **Data contract is authoritative for historical event payload schema.** Field names, types, and constraints in `docs/specifications/contracts/datacontract.yaml` must match the published event payloads.
 8. **Task-first.** Run `task` to discover commands. If no task exists for an operation, add one before running it.
 9. **Business language over CRUD.** Use domain verbs in specs, user stories, descriptions, and comments. Prefer "add / edit / remove / archive" over "create / update / delete" in any human-readable context. HTTP methods and technical identifiers keep their technical names.
+10. **Implementation guidance is reusable and technology-agnostic.** Use `.github/instructions/api-implementation.instructions.md` to implement these contracts consistently in downstream repositories without prescribing a framework/runtime in this repository.
 
 ---
 

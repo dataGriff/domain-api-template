@@ -53,7 +53,8 @@ task domain:check   # lint contracts + regenerate domain overview docs
 ### Keep (design and contract source — do not change unless there is a clear reason):
 - `Taskfile.yml` — project-wide tasks for linting and docs
 - `.spectral-openapi.yaml`, `.spectral-asyncapi.yaml` — Linting rulesets
-- `.github/` — CI workflows and Copilot instructions
+- `.github/` — CI workflows and implementation guidance/instructions
+- `.github/instructions/api-implementation.instructions.md` — reusable implementation conformance guide for downstream repos
 
 ### Replace (domain pack — this is what changes per project):
 - `docs/specifications/` — All spec files (use `task domain:init` to start)
@@ -65,5 +66,5 @@ task domain:check   # lint contracts + regenerate domain overview docs
 ## When Working on Specs vs Code
 
 - If asked to **change a spec file**: confirm this is a deliberate business decision. Spec changes ripple into code — do them intentionally.
-- If asked to **change implementation details**: keep implementation out of this repository and update the design/contracts instead.
+- If asked to **change implementation details**: keep runtime/framework code out of this repository and update design/contracts plus reusable implementation guidance when needed.
 - If **spec and downstream implementation disagree**: update implementation in its own repo, not here.

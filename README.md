@@ -21,6 +21,7 @@ task domain:check
 |------|----------|
 | Product + domain requirements | `docs/specifications/*.md` |
 | API/event/data contracts | `docs/specifications/contracts/*.yaml` |
+| Implementation conformance guidance | `.github/instructions/api-implementation.instructions.md` |
 | Blank spec templates | `docs/specifications/_template/` |
 | Contract linting + docs tasks | `Taskfile.yml` |
 | Published docs config | `mkdocs.yml`, `docs/`, `.github/workflows/docs.yml` |
@@ -38,3 +39,4 @@ This repository intentionally contains no runnable API implementation. It is the
 - data contracts
 
 Implementations should live in separate repositories that consume these specs and contracts.
+Use the implementation guidance in `.github/instructions/api-implementation.instructions.md` to keep those implementations consistent while remaining technology-agnostic.
