@@ -53,7 +53,7 @@ task domain:check   # lint contracts + regenerate domain overview docs
 ### Keep (design and contract source — do not change unless there is a clear reason):
 - `Taskfile.yml` — project-wide tasks for linting and docs
 - `.spectral-openapi.yaml`, `.spectral-asyncapi.yaml` — Linting rulesets
-- `.github/` — CI workflows and implementation guidance/instructions
+- `.github/` — CI workflows and implementation guidance
 - `.github/instructions/api-implementation.instructions.md` — reusable implementation conformance guide for downstream repos
 
 ### Replace (domain pack — this is what changes per project):
