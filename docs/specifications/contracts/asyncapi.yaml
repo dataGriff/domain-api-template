@@ -3,18 +3,17 @@ info:
   title: Items Domain Events
   version: 1.0.0
   description: |
-    Domain event contract for the **Items** example domain.
+    Domain event contract for the **Items** domain — a small shared
+    catalogue of named entries. Events are emitted on every change to
+    the catalogue (add, edit, remove). See `prd.md` for the domain
+    narrative and `domain-model.md` for the entity definitions.
 
-    This is a deliberately simple domain included as a reference
-    contract set in the Domain API Template. Replace this file with
-    your own domain's event contract.
-
-    All events follow the [CloudEvents 1.0](https://cloudevents.io/) specification
-    and are published over AMQP.
+    All events conform to the [CloudEvents 1.0](https://cloudevents.io/)
+    specification. The transport binding for development is declared in
+    the `servers` section below; productionised deployments may choose
+    any binding compatible with the channel definitions in this file.
   contact:
-    name: Domain API Template
-    url: https://github.com/dataGriff/domain-api-template
-    email: template@example.com
+    name: Items Domain Spec Set
   license:
     name: MIT
     url: https://opensource.org/licenses/MIT
@@ -23,7 +22,7 @@ servers:
   development:
     url: amqp://localhost:5672
     protocol: amqp
-    description: Local RabbitMQ broker
+    description: Local AMQP broker (development binding)
 
 defaultContentType: application/json
 

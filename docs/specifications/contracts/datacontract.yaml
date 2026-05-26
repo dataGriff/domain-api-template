@@ -23,16 +23,16 @@ description:
     payload (id, contributorId, removedAt only).
 
 team:
-  name: Domain API Template
+  name: Items Domain Spec Set
   members:
-    - username: template@example.com
-      name: Domain API Template
+    - username: items-domain
+      name: Items Domain Spec Set
       role: owner
 
 servers:
   - server: development
     type: custom
-    description: Local RabbitMQ AMQP broker publishing item domain events.
+    description: Local AMQP broker (development binding) publishing item domain events.
     environment: dev
     customProperties:
       - property: protocol

@@ -2,23 +2,21 @@ openapi: 3.0.3
 info:
   title: Items API
   description: |
-    Example domain API for the **Domain API Template**.
+    REST contract for the **Items** domain — a small shared catalogue of
+    named entries owned by the team members who add them. See
+    `prd.md` for the domain narrative and `domain-model.md` for the
+    entity definitions.
 
-    This is a deliberately simple "Items" domain included as a reference
-    contract set. It demonstrates the full template pattern:
+    The contract demonstrates:
 
     - JWT-based authentication with two roles (`contributor`, `viewer`)
-    - Role-based access control (RBAC)
+    - Role-based access control
     - Ownership-scoped write operations
     - Pagination on list endpoints
     - Standard error response shapes
-
-    **Replace this spec** with your own domain's OpenAPI contract when using this template.
-    Run `task domain:init` to copy blank spec templates into `docs/specifications/`.
   version: 1.0.0
   contact:
-    name: Domain API Template
-    email: template@example.com
+    name: Items Domain Spec Set
 
 servers:
   - url: http://localhost:3000

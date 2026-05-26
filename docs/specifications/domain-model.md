@@ -1,13 +1,12 @@
 # Domain Model — Items
 
-> **Example domain.** This is the reference domain model included with the Domain API Template.
-> Replace this file with your own domain model by running `task domain:init`.
-
----
-
 ## Overview
 
-The **Items** domain is a minimal catalogue of named items. Each item is owned by a contributor and has a simple `active` / `archived` lifecycle. There are two roles: `contributor` (creates and manages items) and `viewer` (read-only access).
+The **Items** domain is a small shared catalogue of named entries
+owned by the team members who add them. Each item has an
+`active`/`archived` lifecycle and is associated with exactly one
+contributor. Two roles operate on the catalogue: `contributor`
+(creates and curates entries) and `viewer` (read-only).
 
 ---
 
@@ -21,7 +20,7 @@ Represents an authenticated user of the system.
 |-----------|------|----------|-------------|
 | `id` | UUID | Yes | Unique identifier |
 | `email` | string (email) | Yes | User's email address (unique) |
-| `password` | string (hashed) | Yes | Bcrypt-hashed password (never returned in responses) |
+| `password` | string (hashed) | Yes | Stored as a hash via an adaptive password-hashing algorithm (see `nfr.md` NFR-SEC-002); never returned in API responses |
 | `firstName` | string | Yes | Given name |
 | `lastName` | string | Yes | Family name |
 | `role` | enum | Yes | `contributor` or `viewer` |
@@ -29,7 +28,8 @@ Represents an authenticated user of the system.
 
 **Business Rules:**
 - Email must be unique across all users.
-- Password is stored as a bcrypt hash; never returned in API responses.
+- The stored password is a hash; the plaintext form is never returned in
+  any API response and never logged.
 - Role is set at registration and cannot be changed via the API.
 
 ---
@@ -51,6 +51,8 @@ Represents a named entry in the catalogue, owned by a contributor.
 **Business Rules:**
 - `status` defaults to `active` on creation.
 - Only the contributor who added an item may edit or remove it.
+- Items cannot be transferred between contributors — `contributorId` is
+  immutable after creation.
 - Viewers may list and view any item but cannot modify them.
 
 ---
@@ -62,14 +64,7 @@ User (role=contributor) ──── creates many ──── Item
 Item ──── belongs to ──────────────────────── User (contributorId)
 ```
 
----
-
-## Aggregates
-
-| Aggregate Root | Entities Contained | Description |
-|---------------|-------------------|-------------|
-| `Item` | Item | Self-contained; ownership is tracked via `contributorId` |
-| `User` | User | Self-contained; no nested child entities |
+A user in the `viewer` role does not create items; they only read them.
 
 ---
 
@@ -96,4 +91,5 @@ active ⟷ archived
 | `active` | `archived` | PATCH /v1/items/{itemId} with `status: "archived"` |
 | `archived` | `active` | PATCH /v1/items/{itemId} with `status: "active"` |
 
-Items can be toggled between `active` and `archived` freely by their owner contributor.
+Items can be toggled between `active` and `archived` freely by their
+owning contributor. There is no third state; archival is reversible.
