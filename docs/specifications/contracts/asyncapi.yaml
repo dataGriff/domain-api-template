@@ -14,6 +14,8 @@ info:
     any binding compatible with the channel definitions in this file.
   contact:
     name: Items Domain Spec Set
+    url: https://example.com/items
+    email: items@example.com
   license:
     name: MIT
     url: https://opensource.org/licenses/MIT
