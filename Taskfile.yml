@@ -93,7 +93,7 @@ tasks:
     desc: Install all tooling and dependencies (run once after cloning — requires mise)
     cmds:
       - mise install
-      - pip install pyyaml
+      - python -m pip install pyyaml
       - task: hooks:install
 
   hooks:install:

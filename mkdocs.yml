@@ -25,8 +25,19 @@ nav:
   - Specifications:
     - Product Requirements: specifications/prd.md
     - Domain Model: specifications/domain-model.md
+    - Glossary: specifications/glossary.md
     - Auth Matrix: specifications/auth-matrix.md
+    - Error Catalogue: specifications/error-catalogue.md
     - Sequence Diagrams: specifications/sequence-diagrams.md
+    - Non-Functional Requirements: specifications/nfr.md
+    - Acceptance Scenarios: specifications/acceptance-scenarios.md
+
+# Files under docs/ that exist for agent or suite-internal purposes
+# and should not appear in the rendered site.
+exclude_docs: |
+  CLAUDE.md
+  specifications/_ambiguities.md
+  specifications/_template/
 
 markdown_extensions:
   - pymdownx.superfences:

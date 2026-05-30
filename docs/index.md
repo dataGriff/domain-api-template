@@ -13,8 +13,12 @@ All authoritative business requirements live in `docs/specifications/`.
 |---|---|
 | [Product Requirements](specifications/prd.md) | Problem statement, personas, user stories, goals |
 | [Domain Model](specifications/domain-model.md) | Entities, attributes, relationships, business rules |
+| [Glossary](specifications/glossary.md) | Ubiquitous language — every entity, attribute, role, event, and key term |
 | [Auth Matrix](specifications/auth-matrix.md) | Roles and which operations each role may perform |
+| [Error Catalogue](specifications/error-catalogue.md) | Canonical error codes with HTTP status, meaning, and triggers |
 | [Sequence Diagrams](specifications/sequence-diagrams.md) | Key interaction flows (Mermaid) |
+| [Non-Functional Requirements](specifications/nfr.md) | Measurable thresholds: performance, availability, security, observability |
+| [Acceptance Scenarios](specifications/acceptance-scenarios.md) | Given/When/Then scenarios mapped to user stories at contract level |
 | [**Domain Overview →**](specifications/domain-overview.html) | Auto-generated: operations, events, entities, ER diagram and data contract in one page |
 | [**Interactive API Reference →**](specifications/api-reference.html) | OpenAPI 3.0.3 contract — live try-it-out |
 | [**AsyncAPI Event Reference →**](specifications/asyncapi-reference.html) | Domain event catalogue — CloudEvents schemas |
@@ -34,7 +38,6 @@ task                # list all available tasks
 task lint           # lint OpenAPI + AsyncAPI + data contract
 task lint:datacontract  # lint ODCS data contract only
 task domain:check   # lint + regenerate domain overview
-task domain:init    # seed blank spec templates into docs/specifications/
 task docs:generate  # (re)generate the domain overview HTML page from specs
 task docs:serve     # serve this documentation site locally
 ```
@@ -56,10 +59,17 @@ task docs:serve     # serve this documentation site locally
 
 ---
 
-## Bootstrap a New Domain
+## About This Repository
 
-1. Create a new repo from this template (**Use this template** on GitHub)
-2. `task domain:init` — copies blank spec templates into `docs/specifications/`
-3. Fill in each spec file (start with `prd.md`, then `domain-model.md`, `auth-matrix.md`, `sequence-diagrams.md`, finally the contracts: `openapi.yaml`, `asyncapi.yaml`, `datacontract.yaml`)
-4. `task domain:check` — ensure contracts lint and docs regenerate successfully
-5. Update `README.md` and this file (`docs/index.md`) for your domain context
+This repository contains the **Items** reference spec set — a small
+shared catalogue with role-based access, lifecycle, and domain events.
+It is bundled with the
+[`domain-spec-suite`](https://github.com/dataGriff/domain-spec-suite)
+as the canonical example of a fully-specified domain.
+
+To start a *new* domain spec set, use the spec suite's
+`domain-orchestrator` skill rather than copying this repo by hand —
+the orchestrator walks you through each phase (discovery, modeling,
+access control, flows, NFRs, contracts, audit) and produces an
+internally-consistent spec set whose every cross-reference can be
+verified.
